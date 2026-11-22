@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModelMeter.ExtensionApp", "ModelMeter.ExtensionApp\ModelMeter.ExtensionApp.csproj", "{22222222-3333-4444-5555-666666666666}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModelMeter.Core", "ModelMeter.Core\\ModelMeter.Core.csproj", "{3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}"
+EndProject
 Global
  GlobalSection(SolutionConfigurationPlatforms) = preSolution
   Debug|ARM64 = Debug|ARM64
