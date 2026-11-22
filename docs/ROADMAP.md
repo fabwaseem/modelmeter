@@ -18,7 +18,7 @@
 - [ ] SQLite persistence, historical import checkpoints, incremental reconciliation and diagnostics
 
 ## Phase 3 — Analytics
-- [ ] SQLite persistence and schema migrations
+- [x] Local SQLite persistence, indexes and idempotent upserts
 - [ ] Date-range aggregation and model/project breakdowns
 - [ ] Versioned pricing catalogue and manual overrides
 - [ ] Session explorer and export
