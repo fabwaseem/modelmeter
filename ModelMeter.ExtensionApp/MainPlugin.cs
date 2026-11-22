@@ -10,6 +10,7 @@ using ModelMeter.Core.Aggregation;
 using ModelMeter.Core.Interfaces;
 using ModelMeter.Core.Models;
 using ModelMeter.Core.Providers;
+using ModelMeter.Core.Storage;
 
 namespace ModelMeter.ExtensionApp;
 
@@ -82,7 +83,19 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
             }
         }
 
-        _usageRecords = records;
+        try
+        {
+            await using var database = new UsageDatabase(UsageDatabase.GetDefaultDatabasePath());
+            await database.InitializeAsync();
+            await database.UpsertAsync(records);
+            _usageRecords = await database.GetUsageAsync(from, to);
+        }
+        catch
+        {
+            // Keep the live scan usable if local persistence is unavailable.
+            _usageRecords = records;
+        }
+
         _providerSnapshots = snapshots;
     }
 
