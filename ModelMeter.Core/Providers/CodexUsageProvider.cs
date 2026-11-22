@@ -14,9 +14,10 @@ public sealed class CodexUsageProvider : IUsageProvider
 
     public CodexUsageProvider(string? codexHome = null)
     {
-        _codexHome = codexHome ?? Environment.GetEnvironmentVariable("CODEX_HOME");
-        if (string.IsNullOrWhiteSpace(_codexHome))
-            _codexHome = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex");
+        var configuredHome = codexHome ?? Environment.GetEnvironmentVariable("CODEX_HOME");
+        _codexHome = !string.IsNullOrWhiteSpace(configuredHome)
+            ? configuredHome
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex");
     }
 
     public string ProviderId => "openai-codex";
