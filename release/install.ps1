@@ -9,7 +9,7 @@ if (-not (Test-Path $package)) { throw "Package not found: $package" }
 if (-not (Test-Path $certificate)) { throw "Signing certificate not found: $certificate" }
 
 Write-Host "Trusting the ModelMeter beta signing certificate for the current Windows user..."
-Import-Certificate -FilePath $certificate -CertStoreLocation "Cert:\CurrentUser\TrustedPeople" | Out-Null
+Import-Certificate -FilePath $certificate -CertStoreLocation "Cert:\CurrentUser\Root" | Out-Null
 
 Write-Host "Installing ModelMeter..."
 Add-AppxPackage -Path $package
