@@ -120,4 +120,38 @@ public sealed class LocalProviderTests
         finally { Directory.Delete(root, true); }
     }
 
+    [Fact]
+    public async Task GeminiCli_ImportsOnlyApiResponseTokenMetadataFromLocalTelemetry()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            var telemetry = Path.Combine(root, "telemetry.log");
+            var jsonl = """
+                {"timestamp":"2026-11-22T11:00:00Z","eventName":"gemini_cli.user_prompt","attributes":{"prompt":"private prompt"}}
+                {"timestamp":"2026-11-22T11:01:00Z","body":{"stringValue":"gemini_cli.api_response"},"attributes":{"model":"gemini-2.5-pro","prompt_id":"p-1","input_token_count":120,"output_token_count":30,"cached_content_token_count":20,"thoughts_token_count":5,"response_text":"private response"}}
+                {"resourceLogs":[{"scopeLogs":[{"logRecords":[{"timeUnixNano":"1795345320000000000","body":{"stringValue":"gemini_cli.api_response"},"attributes":[{"key":"model","value":{"stringValue":"gemini-2.5-flash"}},{"key":"prompt_id","value":{"stringValue":"p-2"}},{"key":"input_token_count","value":{"intValue":"90"}},{"key":"output_token_count","value":{"intValue":"15"}},{"key":"cached_content_token_count","value":{"intValue":"10"}}]}]}]}]}
+                """;
+            await File.WriteAllTextAsync(telemetry, jsonl, Encoding.UTF8);
+
+            var provider = new GeminiCliUsageProvider(telemetry);
+            var records = await provider.GetUsageAsync(DateTimeOffset.Parse("2026-11-22T00:00:00Z"),
+                DateTimeOffset.Parse("2026-11-23T00:00:00Z"), CancellationToken.None);
+
+            Assert.Equal(2, records.Count);
+            Assert.Equal("gemini-2.5-pro", records[0].ModelId);
+            Assert.Equal(100, records[0].InputTokens);
+            Assert.Equal(20, records[0].CacheReadTokens);
+            Assert.Equal(30, records[0].OutputTokens);
+            Assert.Equal(5, records[0].CacheWriteTokens == 0 ? 0 : records[0].CacheWriteTokens);
+            Assert.Equal("gemini-2.5-flash", records[1].ModelId);
+            Assert.Equal(80, records[1].InputTokens);
+            Assert.Equal(10, records[1].CacheReadTokens);
+            Assert.Equal(15, records[1].OutputTokens);
+            Assert.All(records, record => Assert.DoesNotContain("private", record.Source));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
 }
