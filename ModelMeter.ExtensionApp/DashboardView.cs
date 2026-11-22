@@ -116,7 +116,7 @@ internal sealed class DashboardView : Grid
             p.Children.Add(ProviderCard(snapshot.DisplayName, $"{snapshot.State} · {snapshot.StatusMessage}", total > 0 ? FormatTokens(total) : "—", ColorForProvider(snapshot.ProviderId)));
         }
         if (_snapshots.Count == 0) p.Children.Add(EmptyState("No providers checked", "ModelMeter has not detected any supported local provider directories."));
-        p.Children.Add(new TextBlock { Text = "Gemini CLI: enable local telemetry in ~/.gemini/settings.json with telemetry.enabled=true, telemetry.target=local, and an absolute telemetry.outfile path. ModelMeter imports API-response token counts only. OpenCode support is coming next.", FontSize = 10, Foreground = B("#FF969BA5"), TextWrapping = TextWrapping.Wrap });
+        p.Children.Add(new TextBlock { Text = "Gemini CLI: enable local telemetry in ~/.gemini/settings.json with telemetry.enabled=true, telemetry.target=local, and an absolute telemetry.outfile path. ModelMeter imports API-response token counts only. OpenCode reads assistant usage metadata from its local SQLite database.", FontSize = 10, Foreground = B("#FF969BA5"), TextWrapping = TextWrapping.Wrap });
         return Scroll(p);
     }
 
@@ -280,8 +280,8 @@ internal sealed class DashboardView : Grid
         return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(14), Child = panel };
     }
 
-    private static string ProviderName(string id) => id switch { "claude-code" => "Claude Code", "openai-codex" => "OpenAI Codex", "gemini-cli" => "Gemini CLI", _ => id };
-    private static string ColorForProvider(string id) => id switch { "claude-code" => "#FFD97757", "openai-codex" => "#FF74AA8A", "gemini-cli" => "#FF7DA8EA", _ => "#FFA3E635" };
+    private static string ProviderName(string id) => id switch { "claude-code" => "Claude Code", "openai-codex" => "OpenAI Codex", "gemini-cli" => "Gemini CLI", "opencode" => "OpenCode", _ => id };
+    private static string ColorForProvider(string id) => id switch { "claude-code" => "#FFD97757", "openai-codex" => "#FF74AA8A", "gemini-cli" => "#FF7DA8EA", "opencode" => "#FFB4A0F5", _ => "#FFA3E635" };
     private static string FormatTokens(long value) => value >= 1_000_000 ? (value / 1_000_000d).ToString("0.##") + "M" : value >= 1_000 ? (value / 1_000d).ToString("0.#") + "K" : value.ToString("N0");
 
     private static ScrollViewer Scroll(UIElement content) => new() { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
