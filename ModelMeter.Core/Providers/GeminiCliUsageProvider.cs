@@ -89,7 +89,7 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
                     SessionId = sessionId,
                     Timestamp = timestamp,
                     InputTokens = Math.Max(0, input - cached),
-                    OutputTokens = output,
+                    OutputTokens = output + thought,
                     CacheReadTokens = cached,
                     CostKind = CostDataKind.Unknown,
                     Source = "gemini-cli-local-telemetry"
@@ -210,7 +210,8 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
             if (value.ValueKind == JsonValueKind.String &&
                 DateTimeOffset.TryParse(value.GetString(), CultureInfo.InvariantCulture,
                     DateTimeStyles.AssumeUniversal, out var parsed)) return parsed;
-            if (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number))
+            if ((value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number)) ||
+                (value.ValueKind == JsonValueKind.String && long.TryParse(value.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out number)))
             {
                 try
                 {
