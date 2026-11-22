@@ -32,4 +32,5 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" />
     <PackageReference Include="WidBar.SDK" Version="2.3.5" />
   </ItemGroup>
+  <ItemGroup><ProjectReference Include="..\\ModelMeter.Core\\ModelMeter.Core.csproj" /></ItemGroup>
 </Project>
