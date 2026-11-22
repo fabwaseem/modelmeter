@@ -19,10 +19,10 @@ ModelMeter is a local-first Windows 11 WidBar widget for understanding AI coding
 |---|---|---|
 | Claude Code | `~/.claude/projects/**/*.jsonl` assistant usage metadata | Implemented; wired to dashboard |
 | OpenAI Codex | `$CODEX_HOME/sessions` and `archived_sessions` rollout JSONL `token_count` events | Implemented; wired to dashboard |
-| Gemini CLI | Explicitly opted-in local OpenTelemetry output | Planned |
+| Gemini CLI | Explicitly opted-in local OpenTelemetry output (`gemini_cli.api_response`) | Implemented; opt-in local telemetry file |
 | OpenCode | Local session/database data | Planned |
 
-The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text. Each startup performs a read-only scan of provider source files and upserts normalized usage metadata into `%LOCALAPPDATA%\\ModelMeter\\usage.db`. The database contains usage counts and short project labels only, not raw source paths or conversation contents. Background refresh and incremental source checkpoints are not implemented yet.
+Gemini CLI requires local telemetry to be enabled and written to a file; ModelMeter reads API-response token counts only and never imports prompt/response bodies. The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text. Each startup performs a read-only scan of provider source files and upserts normalized usage metadata into `%LOCALAPPDATA%\\ModelMeter\\usage.db`. The database contains usage counts and short project labels only, not raw source paths or conversation contents. Background refresh and incremental source checkpoints are not implemented yet.
 
 ModelMeter will distinguish subscription quota, actual API billing and API-equivalent estimates. It will never present an estimate as an invoice or infer a quota reset time.
 
