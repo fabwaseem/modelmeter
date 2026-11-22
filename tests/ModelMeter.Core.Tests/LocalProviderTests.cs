@@ -93,4 +93,31 @@ public sealed class LocalProviderTests
         }
         finally { Directory.Delete(root, true); }
     }
+    [Fact]
+    public async Task Codex_MaintainsCumulativeBaselineAfterPerTurnUsage()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var sessions = Path.Combine(root, "sessions");
+        Directory.CreateDirectory(sessions);
+        try
+        {
+            var jsonl = """
+                {"type":"session_meta","payload":{"id":"s-mixed"}}
+                {"timestamp":"2026-11-22T10:01:00Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":500,"cached_input_tokens":200,"output_tokens":90},"last_token_usage":{"input_tokens":100,"cached_input_tokens":40,"output_tokens":20}}}}
+                {"timestamp":"2026-11-22T10:02:00Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":650,"cached_input_tokens":260,"output_tokens":120}}}}
+                """;
+            await File.WriteAllTextAsync(Path.Combine(sessions, "rollout-mixed.jsonl"), jsonl, Encoding.UTF8);
+
+            var provider = new CodexUsageProvider(root);
+            var records = await provider.GetUsageAsync(DateTimeOffset.Parse("2026-11-22T00:00:00Z"),
+                DateTimeOffset.Parse("2026-11-23T00:00:00Z"), CancellationToken.None);
+
+            Assert.Equal(2, records.Count);
+            Assert.Equal(90, records[1].InputTokens);
+            Assert.Equal(60, records[1].CacheReadTokens);
+            Assert.Equal(30, records[1].OutputTokens);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
 }
