@@ -4,6 +4,8 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using ModelMeter.Core.Aggregation;
+using ModelMeter.Core.Models;
 
 namespace ModelMeter.ExtensionApp;
 
@@ -12,11 +14,15 @@ internal sealed class DashboardView : Grid
     private readonly ContentControl _page = new();
     private readonly Dictionary<string, Button> _tabs = new();
     private readonly MainPlugin.WidgetSettings _settings;
+    private readonly IReadOnlyList<UsageRecord> _records;
+    private readonly IReadOnlyList<ProviderSnapshot> _snapshots;
     private string _active = "Overview";
 
-    public DashboardView(MainPlugin.WidgetSettings settings)
+    public DashboardView(MainPlugin.WidgetSettings settings, IReadOnlyList<UsageRecord> records, IReadOnlyList<ProviderSnapshot> snapshots)
     {
         _settings = settings;
+        _records = records;
+        _snapshots = snapshots;
         Background = B("#FF101113");
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -73,78 +79,89 @@ internal sealed class DashboardView : Grid
     private UIElement Overview()
     {
         var p = new StackPanel { Spacing = 15 };
-        p.Children.Add(Heading("Overview", "Your AI activity, all in one place."));
+        var summary = UsageAggregator.Summarize(_records);
+        p.Children.Add(Heading("Overview", "Your local AI coding usage, all in one place."));
         var cards = new Grid { ColumnSpacing = 10 };
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        cards.Children.Add(Metric("TOTAL TOKENS", "1.84M", "+18.6% vs yesterday", true));
-        var cost = Metric("API-EQUIVALENT COST", _settings.ShowCost ? "$12.48" : "Hidden", "Estimate · not subscription spend");
+        cards.Children.Add(Metric("TOTAL TOKENS", FormatTokens(summary.TotalTokens), $"{summary.SessionCount:N0} sessions · last 30 days", true));
+        var cost = Metric("API-EQUIVALENT COST", _settings.ShowCost ? "Not priced" : "Hidden", "Pricing catalogue not connected");
         Grid.SetColumn(cost, 1); cards.Children.Add(cost); p.Children.Add(cards);
         p.Children.Add(Section("USAGE TREND", "LAST 7 DAYS"));
-        p.Children.Add(Chart());
-        p.Children.Add(Section("PROVIDER ACTIVITY", "TODAY"));
-        p.Children.Add(Provider("Claude Code", "812K tokens", .82, "#FFD97757"));
-        p.Children.Add(Provider("OpenAI Codex", "526K tokens", .56, "#FF74AA8A"));
-        p.Children.Add(Provider("Gemini CLI", "338K tokens", .36, "#FF7DA8EA"));
-        p.Children.Add(Provider("OpenCode", "164K tokens", .18, "#FFC18BEA"));
-        p.Children.Add(new TextBlock { Text = "Illustrative demo figures. API-equivalent cost is not an actual bill.", FontSize = 10, Foreground = B("#FF777D87"), TextWrapping = TextWrapping.Wrap });
+        p.Children.Add(Chart(_records));
+        p.Children.Add(Section("PROVIDER ACTIVITY", "LAST 30 DAYS"));
+        var grouped = _records.GroupBy(x => x.ProviderId).OrderByDescending(g => g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens)).ToArray();
+        if (grouped.Length == 0)
+            p.Children.Add(EmptyState("No local usage events found", "Use Claude Code or Codex, then reopen ModelMeter to import supported local usage records."));
+        else
+        {
+            var max = grouped.Max(g => g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens));
+            foreach (var group in grouped)
+            {
+                var total = group.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens);
+                p.Children.Add(Provider(ProviderName(group.Key), FormatTokens(total), max == 0 ? 0 : (double)total / max, ColorForProvider(group.Key)));
+            }
+        }
+        p.Children.Add(new TextBlock { Text = "Imported from local session metadata. Prompts, responses and tool output are not displayed or retained.", FontSize = 10, Foreground = B("#FF777D87"), TextWrapping = TextWrapping.Wrap });
         return Scroll(p);
     }
 
     private UIElement Providers()
     {
         var p = new StackPanel { Spacing = 12 };
-        p.Children.Add(Heading("Providers", "Provider adapters will connect local usage sources."));
-        p.Children.Add(ProviderCard("Claude Code", "Planned · Local session history", "812K", "#FFD97757"));
-        p.Children.Add(ProviderCard("OpenAI Codex", "Planned · Local session history", "526K", "#FF74AA8A"));
-        p.Children.Add(ProviderCard("Gemini CLI", "Planned · Telemetry opt-in", "338K", "#FF7DA8EA"));
-        p.Children.Add(ProviderCard("OpenCode", "Planned · Local session database", "164K", "#FFC18BEA"));
+        p.Children.Add(Heading("Providers", "Local usage sources detected on this device."));
+        foreach (var snapshot in _snapshots)
+        {
+            var total = _records.Where(x => x.ProviderId == snapshot.ProviderId).Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens);
+            p.Children.Add(ProviderCard(snapshot.DisplayName, $"{snapshot.State} · {snapshot.StatusMessage}", total > 0 ? FormatTokens(total) : "—", ColorForProvider(snapshot.ProviderId)));
+        }
+        if (_snapshots.Count == 0) p.Children.Add(EmptyState("No providers checked", "ModelMeter has not detected any supported local provider directories."));
+        p.Children.Add(new TextBlock { Text = "Gemini CLI and OpenCode adapters are not available in this build yet.", FontSize = 10, Foreground = B("#FF969BA5"), TextWrapping = TextWrapping.Wrap });
         return Scroll(p);
     }
 
     private UIElement Analytics()
     {
         var p = new StackPanel { Spacing = 14 };
-        p.Children.Add(Heading("Analytics", "Explore token volume and usage mix."));
-        p.Children.Add(Chart());
-        p.Children.Add(Section("TOKEN COMPOSITION", "TODAY"));
-        p.Children.Add(Provider("Input tokens", "612K · 33%", .33, "#FF7DA8EA"));
-        p.Children.Add(Provider("Output tokens", "418K · 23%", .23, "#FFA3E635"));
-        p.Children.Add(Provider("Cache read", "766K · 42%", .42, "#FFC18BEA"));
-        p.Children.Add(Provider("Cache write", "44K · 2%", .05, "#FFD97757"));
+        p.Children.Add(Heading("Analytics", "Token breakdown from supported local session records."));
+        p.Children.Add(Chart(_records));
+        var summary = UsageAggregator.Summarize(_records);
+        p.Children.Add(Section("TOKEN COMPOSITION", "LAST 30 DAYS"));
+        var buckets = new[] { ("Input tokens", summary.InputTokens, "#FF7DA8EA"), ("Output tokens", summary.OutputTokens, "#FFA3E635"), ("Cache read", summary.CacheReadTokens, "#FFC18BEA"), ("Cache write", summary.CacheWriteTokens, "#FFD97757") };
+        var max = Math.Max(1, buckets.Max(x => x.Item2));
+        foreach (var bucket in buckets) p.Children.Add(Provider(bucket.Item1, FormatTokens(bucket.Item2), (double)bucket.Item2 / max, bucket.Item3));
         return Scroll(p);
     }
 
     private UIElement Models()
     {
         var p = new StackPanel { Spacing = 11 };
-        p.Children.Add(Heading("Models", "Usage grouped by model."));
-        p.Children.Add(ProviderCard("Claude Sonnet", "Claude Code · Input, output and cache", "684K", "#FFD97757"));
-        p.Children.Add(ProviderCard("GPT-5", "OpenAI Codex · Input and output", "526K", "#FF74AA8A"));
-        p.Children.Add(ProviderCard("Gemini Pro", "Gemini CLI · Input and output", "338K", "#FF7DA8EA"));
-        p.Children.Add(ProviderCard("Claude Opus", "Claude Code · Input, output and cache", "128K", "#FFD97757"));
-        p.Children.Add(ProviderCard("DeepSeek", "OpenCode · Input and output", "164K", "#FFC18BEA"));
+        p.Children.Add(Heading("Models", "Token usage grouped by model."));
+        var models = _records.GroupBy(x => new { x.ProviderId, x.ModelId })
+            .Select(g => new { g.Key.ProviderId, g.Key.ModelId, Tokens = g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens) })
+            .OrderByDescending(x => x.Tokens).Take(20).ToArray();
+        foreach (var model in models) p.Children.Add(ProviderCard(model.ModelId, ProviderName(model.ProviderId), FormatTokens(model.Tokens), ColorForProvider(model.ProviderId)));
+        if (models.Length == 0) p.Children.Add(EmptyState("No model usage yet", "Model breakdowns will appear when supported usage events are found."));
         return Scroll(p);
     }
 
     private UIElement Sessions()
     {
         var p = new StackPanel { Spacing = 10 };
-        p.Children.Add(Heading("Sessions", "Recent activity, without conversation contents."));
-        p.Children.Add(Session("modelmeter", "Claude Sonnet · Just now · 42 min", "184K"));
-        p.Children.Add(Session("firevoice", "GPT-5 · 12 min ago · 1h 08m", "142K"));
-        p.Children.Add(Session("reelspan", "Gemini Pro · 38 min ago · 26 min", "96K"));
-        p.Children.Add(Session("hiway-platform", "Claude Sonnet · 1h ago · 54 min", "88K"));
+        p.Children.Add(Heading("Sessions", "Recent sessions, without conversation contents."));
+        var sessions = _records.Where(x => !string.IsNullOrWhiteSpace(x.SessionId)).GroupBy(x => x.SessionId!)
+            .Select(g => new { Latest = g.Max(x => x.Timestamp), Project = g.Select(x => x.ProjectName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "Local project", Model = g.OrderByDescending(x => x.Timestamp).First().ModelId, Tokens = g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens) })
+            .OrderByDescending(x => x.Latest).Take(50).ToArray();
+        foreach (var session in sessions) p.Children.Add(Session(session.Project, $"{session.Model} · {session.Latest.ToLocalTime():MMM d, h:mm tt}", FormatTokens(session.Tokens)));
+        if (sessions.Length == 0) p.Children.Add(EmptyState("No sessions imported", "Sessions will appear here after ModelMeter finds token usage in local provider history."));
         return Scroll(p);
     }
 
     private UIElement Quotas()
     {
         var p = new StackPanel { Spacing = 12 };
-        p.Children.Add(Heading("Quotas", "Only provider-reported limits will appear here."));
-        p.Children.Add(Quota("Claude Code", "5-hour window", .62, "Demo: 62% used · reset in 2h 14m"));
-        p.Children.Add(Quota("Claude Code", "Weekly window", .38, "Demo: 38% used · reset Monday"));
-        p.Children.Add(new TextBlock { Text = "These are placeholders, not live quota data. Production quota cards will require a reliable supported provider source.", FontSize = 10, TextWrapping = TextWrapping.Wrap, Foreground = B("#FF969BA5") });
+        p.Children.Add(Heading("Quotas", "Subscription limits are separate from API usage."));
+        p.Children.Add(EmptyState("No verified quota data", "This build reads local token usage only. It does not guess subscription limits, remaining quota or reset times."));
         return Scroll(p);
     }
 
@@ -175,20 +192,31 @@ internal sealed class DashboardView : Grid
         return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(13), Child = s };
     }
 
-    private static UIElement Chart()
+    private static UIElement Chart(IReadOnlyList<UsageRecord> records)
     {
         var root = new Grid { Height = 145, Margin = new Thickness(4, 8, 4, 0) };
         for (var i = 0; i < 7; i++) root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var values = new[] { .42, .61, .48, .74, .66, .94, .78 };
-        for (var i = 0; i < values.Length; i++)
+        var today = DateTimeOffset.Now.Date;
+        var daily = Enumerable.Range(0, 7).Select(offset =>
         {
-            var bar = new Border { Width = 22, Height = 110 * values[i], VerticalAlignment = VerticalAlignment.Bottom, HorizontalAlignment = HorizontalAlignment.Center, CornerRadius = new CornerRadius(5,5,2,2), Background = i == 5 ? B("#FFA3E635") : B("#FF48533A") };
+            var date = today.AddDays(offset - 6);
+            var total = records.Where(x => x.Timestamp.ToLocalTime().Date == date).Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens);
+            return (Date: date, Total: total);
+        }).ToArray();
+        var max = Math.Max(1, daily.Max(x => x.Total));
+        for (var i = 0; i < daily.Length; i++)
+        {
+            var height = Math.Max(2, 110d * daily[i].Total / max);
+            var bar = new Border { Width = 22, Height = height, VerticalAlignment = VerticalAlignment.Bottom, HorizontalAlignment = HorizontalAlignment.Center, CornerRadius = new CornerRadius(5,5,2,2), Background = i == 6 ? B("#FFA3E635") : B("#FF48533A") };
             Grid.SetColumn(bar, i); root.Children.Add(bar);
         }
         var labels = new Grid { Margin = new Thickness(0, 7, 0, 0) };
         foreach (var _ in Enumerable.Range(0, 7)) labels.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var days = new[] { "M", "T", "W", "T", "F", "S", "S" };
-        for (var i = 0; i < days.Length; i++) { var t = new TextBlock { Text = days[i], FontSize = 9, Foreground = B("#FF777D87"), HorizontalAlignment = HorizontalAlignment.Center }; Grid.SetColumn(t, i); labels.Children.Add(t); }
+        for (var i = 0; i < daily.Length; i++)
+        {
+            var t = new TextBlock { Text = daily[i].Date.ToString("ddd")[..1], FontSize = 9, Foreground = B("#FF777D87"), HorizontalAlignment = HorizontalAlignment.Center };
+            Grid.SetColumn(t, i); labels.Children.Add(t);
+        }
         var s = new StackPanel(); s.Children.Add(root); s.Children.Add(labels);
         return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(12), Child = s };
     }
@@ -230,7 +258,7 @@ internal sealed class DashboardView : Grid
         s.Children.Add(new TextBlock { Text = details, FontSize = 10, Foreground = B("#FF969BA5") });
         g.Children.Add(s);
         var n = new TextBlock { Text = tokens, FontSize = 13, Foreground = B("#FFA3E635"), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(n, 1); g.Children.Add(n);
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Child = g };
+        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(13), Child = g };
     }
 
     private static UIElement Quota(string provider, string window, double used, string note)
@@ -243,6 +271,18 @@ internal sealed class DashboardView : Grid
         s.Children.Add(new TextBlock { Text = note, FontSize = 10, Foreground = B("#FF969BA5") });
         return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(14), Child = s };
     }
+
+    private static UIElement EmptyState(string title, string description)
+    {
+        var panel = new StackPanel { Spacing = 6 };
+        panel.Children.Add(new TextBlock { Text = title, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
+        panel.Children.Add(new TextBlock { Text = description, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = B("#FF969BA5") });
+        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(14), Child = panel };
+    }
+
+    private static string ProviderName(string id) => id switch { "claude-code" => "Claude Code", "openai-codex" => "OpenAI Codex", _ => id };
+    private static string ColorForProvider(string id) => id switch { "claude-code" => "#FFD97757", "openai-codex" => "#FF74AA8A", _ => "#FFA3E635" };
+    private static string FormatTokens(long value) => value >= 1_000_000 ? (value / 1_000_000d).ToString("0.##") + "M" : value >= 1_000 ? (value / 1_000d).ToString("0.#") + "K" : value.ToString("N0");
 
     private static ScrollViewer Scroll(UIElement content) => new() { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     private static SolidColorBrush B(string hex) => new(Color.FromArgb(Convert.ToByte(hex[1..3],16), Convert.ToByte(hex[3..5],16), Convert.ToByte(hex[5..7],16), Convert.ToByte(hex[7..9],16)));
