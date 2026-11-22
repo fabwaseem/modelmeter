@@ -148,7 +148,7 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
 
     private static string? ReadAttribute(JsonElement attributes, string name)
     {
-        if (attributes.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+        if (attributes.ValueKind == JsonValueKind.Object)
             return attributes.TryGetProperty(name, out var value) ? ReadScalar(value) : null;
 
         if (attributes.ValueKind == JsonValueKind.Array)
