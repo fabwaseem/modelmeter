@@ -37,7 +37,7 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
 
     public override UIElement? CreatePreviewContent()
     {
-        var root = new Grid { Padding = new Thickness(10, 0, 10, 0) };
+        var root = new Grid { Margin = new Thickness(10, 0, 10, 0) };
         root.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         root.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -59,7 +59,7 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
     public UIElement? CreateSettingsContent(IWidgetSettingsContext context)
     {
         var draft = WidgetSettings.Parse(context.SettingsJson);
-        var panel = new StackPanel { Spacing = 16, Padding = new Thickness(20) };
+        var panel = new StackPanel { Spacing = 16, Margin = new Thickness(20) };
         panel.Children.Add(new TextBlock { Text = "ModelMeter settings", FontSize = 20, FontWeight = FontWeights.SemiBold });
         panel.Children.Add(new TextBlock { Text = "Choose what appears in your taskbar glance.", FontSize = 12, Opacity = .7 });
         AddToggle(panel, "Show total tokens", draft.ShowTokens, v => draft.ShowTokens = v);
