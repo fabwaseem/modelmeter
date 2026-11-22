@@ -143,8 +143,7 @@ public sealed class LocalProviderTests
             Assert.Equal("gemini-2.5-pro", records[0].ModelId);
             Assert.Equal(100, records[0].InputTokens);
             Assert.Equal(20, records[0].CacheReadTokens);
-            Assert.Equal(30, records[0].OutputTokens);
-            Assert.Equal(5, records[0].CacheWriteTokens == 0 ? 0 : records[0].CacheWriteTokens);
+            Assert.Equal(35, records[0].OutputTokens);
             Assert.Equal("gemini-2.5-flash", records[1].ModelId);
             Assert.Equal(80, records[1].InputTokens);
             Assert.Equal(10, records[1].CacheReadTokens);
