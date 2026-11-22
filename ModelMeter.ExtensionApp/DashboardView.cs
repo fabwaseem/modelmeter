@@ -85,7 +85,10 @@ internal sealed class DashboardView : Grid
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         cards.Children.Add(Metric("TOTAL TOKENS", FormatTokens(summary.TotalTokens), $"{summary.SessionCount:N0} sessions · last 30 days", true));
-        var hasRecordedEstimate = _records.Any(x => x.EstimatedApiCost.HasValue && x.CostKind == CostDataKind.ApiEquivalentEstimate);\n        var costValue = hasRecordedEstimate ? "$" + summary.ApiEquivalentCost.ToString("0.0000") : "Not priced";\n        var costNote = hasRecordedEstimate ? "Provider-reported estimate · not an invoice" : "No provider cost estimate available";\n        var cost = Metric("API-EQUIVALENT COST", _settings.ShowCost ? costValue : "Hidden", _settings.ShowCost ? costNote : "Cost display disabled");
+        var hasRecordedEstimate = _records.Any(x => x.EstimatedApiCost.HasValue && x.CostKind == CostDataKind.ApiEquivalentEstimate);
+        var costValue = hasRecordedEstimate ? "$" + summary.ApiEquivalentCost.ToString("0.0000") : "Not priced";
+        var costNote = hasRecordedEstimate ? "Provider-reported estimate · not an invoice" : "No provider cost estimate available";
+        var cost = Metric("API-EQUIVALENT COST", _settings.ShowCost ? costValue : "Hidden", _settings.ShowCost ? costNote : "Cost display disabled");
         Grid.SetColumn(cost, 1); cards.Children.Add(cost); p.Children.Add(cards);
         p.Children.Add(Section("USAGE TREND", "LAST 7 DAYS"));
         p.Children.Add(Chart(_records));
