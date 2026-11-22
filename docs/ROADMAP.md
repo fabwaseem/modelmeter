@@ -13,7 +13,7 @@
 ## Phase 2 — Provider ingestion
 - [x] Claude Code local JSONL usage reader and dashboard integration
 - [x] Codex local rollout token_count reader and dashboard integration
-- [ ] Gemini CLI opt-in local telemetry reader
+- [x] Gemini CLI opt-in local telemetry reader
 - [ ] OpenCode local session/database reader
 - [ ] SQLite persistence, historical import checkpoints, incremental reconciliation and diagnostics
 
