@@ -53,9 +53,10 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
 
         foreach (var provider in providers)
         {
+            ProviderSnapshot? snapshot = null;
             try
             {
-                var snapshot = await provider.DetectAsync(CancellationToken.None);
+                snapshot = await provider.DetectAsync(CancellationToken.None);
                 snapshots.Add(snapshot);
                 if (snapshot.State == ProviderState.NotDetected) continue;
                 records.AddRange(await provider.GetUsageAsync(from, to, CancellationToken.None));
@@ -68,14 +69,16 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
             }
             catch (Exception ex)
             {
-                snapshots.Add(new ProviderSnapshot
+                var error = new ProviderSnapshot
                 {
                     ProviderId = provider.ProviderId,
                     DisplayName = provider.DisplayName,
                     State = ProviderState.Error,
                     LastUpdatedAt = DateTimeOffset.Now,
                     StatusMessage = ex.GetType().Name
-                });
+                };
+                if (snapshot is null) snapshots.Add(error);
+                else snapshots[^1] = error;
             }
         }
 
@@ -91,7 +94,7 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
         root.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         root.Children.Add(new Border { Width = 7, Height = 7, CornerRadius = new CornerRadius(4), Background = Brush("#FFA3E635"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,9,0) });
         var copy = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center };
-        copy.Children.Add(new TextBlock { Text = "TODAY", FontSize = 9, CharacterSpacing = 100, Foreground = Brush("#FF969BA5") });
+        copy.Children.Add(new TextBlock { Text = "LAST 30 DAYS", FontSize = 9, CharacterSpacing = 100, Foreground = Brush("#FF969BA5") });
         copy.Children.Add(new TextBlock { Text = _settings.ShowTokens ? $"{FormatTokens(UsageAggregator.Summarize(_usageRecords).TotalTokens)} tokens" : "ModelMeter", FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = Brush("#FFF3F4F6") });
         Grid.SetColumn(copy, 1); root.Children.Add(copy);
         if (_settings.ShowProviderCount)
@@ -124,7 +127,7 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
             toggle.Toggled += (_, _) => { update(toggle.IsOn); Save(); };
             host.Children.Add(toggle);
         }
-        panel.Children.Add(new TextBlock { Text = "Privacy first: this build displays demo data only. It does not read prompts, responses, source code or credentials.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = .65 });
+        panel.Children.Add(new TextBlock { Text = "Privacy first: usage metadata is read locally. Prompt and response text, tool output and source code are never stored by ModelMeter.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = .65 });
         return panel;
     }
 
