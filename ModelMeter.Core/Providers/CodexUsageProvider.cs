@@ -107,34 +107,42 @@ public sealed class CodexUsageProvider : IUsageProvider
 
                 var last = info.TryGetProperty("last_token_usage", out var lastUsage) &&
                            lastUsage.ValueKind == JsonValueKind.Object;
-                var usage = last ? lastUsage : info.TryGetProperty("total_token_usage", out var totalUsage)
-                    ? totalUsage : default;
+                var hasTotal = info.TryGetProperty("total_token_usage", out var totalUsage) &&
+                               totalUsage.ValueKind == JsonValueKind.Object;
+                var usage = last ? lastUsage : hasTotal ? totalUsage : default;
                 if (usage.ValueKind != JsonValueKind.Object) continue;
 
-                var cumulativeInput = ReadLong(usage, "input_tokens");
-                var cumulativeCached = ReadLong(usage, "cached_input_tokens");
-                var cumulativeOutput = ReadLong(usage, "output_tokens");
+                var usageInput = ReadLong(usage, "input_tokens");
+                var usageCached = ReadLong(usage, "cached_input_tokens");
+                var usageOutput = ReadLong(usage, "output_tokens");
 
                 long input, cached, output;
                 if (last)
                 {
-                    input = Math.Max(0, cumulativeInput - cumulativeCached);
-                    cached = cumulativeCached;
-                    output = cumulativeOutput;
+                    input = Math.Max(0, usageInput - usageCached);
+                    cached = usageCached;
+                    output = usageOutput;
                 }
                 else
                 {
-                    input = Math.Max(0, cumulativeInput - previousInput -
-                        Math.Max(0, cumulativeCached - previousCached));
-                    cached = Math.Max(0, cumulativeCached - previousCached);
-                    output = Math.Max(0, cumulativeOutput - previousOutput);
+                    input = Math.Max(0, usageInput - previousInput -
+                        Math.Max(0, usageCached - previousCached));
+                    cached = Math.Max(0, usageCached - previousCached);
+                    output = Math.Max(0, usageOutput - previousOutput);
                 }
 
-                if (!last)
+                // Keep cumulative baselines in sync even when this event supplied per-turn usage.
+                if (hasTotal)
                 {
-                    previousInput = Math.Max(previousInput, cumulativeInput);
-                    previousCached = Math.Max(previousCached, cumulativeCached);
-                    previousOutput = Math.Max(previousOutput, cumulativeOutput);
+                    previousInput = Math.Max(previousInput, ReadLong(totalUsage, "input_tokens"));
+                    previousCached = Math.Max(previousCached, ReadLong(totalUsage, "cached_input_tokens"));
+                    previousOutput = Math.Max(previousOutput, ReadLong(totalUsage, "output_tokens"));
+                }
+                else if (!last)
+                {
+                    previousInput = Math.Max(previousInput, usageInput);
+                    previousCached = Math.Max(previousCached, usageCached);
+                    previousOutput = Math.Max(previousOutput, usageOutput);
                 }
                 if (input == 0 && cached == 0 && output == 0) continue;
 
