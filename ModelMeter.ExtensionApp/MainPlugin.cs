@@ -22,8 +22,8 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
     public override string Id => "com.fabwaseem.modelmeter";
     public override string Name => "ModelMeter";
     public override int PreviewLogicalWidth => 190;
-    public override int FlyoutWidth => 760;
-    public override int FlyoutHeight => 700;
+    public override int FlyoutWidth => 920;
+    public override int FlyoutHeight => 760;
 
     internal sealed class WidgetSettings
     {
