@@ -108,9 +108,9 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
 
         // Gemini's local OpenTelemetry file exporter writes one structured log record per line.
         // Support both direct log records and the standard OTLP resourceLogs envelope.
-        if (ReadString(root, "eventName") == "gemini_cli.api_response" ||
-            ReadString(root, "name") == "gemini_cli.api_response" ||
-            ReadString(root, "body") == "gemini_cli.api_response")
+        if (ReadAnyString(root, "eventName") == "gemini_cli.api_response" ||
+            ReadAnyString(root, "name") == "gemini_cli.api_response" ||
+            ReadAnyString(root, "body") == "gemini_cli.api_response")
         {
             attributes = FindAttributes(root);
             timestamp = ReadTimestamp(root);
@@ -143,36 +143,23 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
         return false;
     }
 
-    private static JsonElement FindAttributes(JsonElement element)
-    {
-        if (element.TryGetProperty("attributes", out var attributes))
-        {
-            if (attributes.ValueKind == JsonValueKind.Object) return attributes;
-            if (attributes.ValueKind == JsonValueKind.Array)
-            {
-                var mapped = new Dictionary<string, string>(StringComparer.Ordinal);
-                foreach (var item in attributes.EnumerateArray())
-                {
-                    var key = ReadString(item, "key");
-                    if (key is null || !item.TryGetProperty("value", out var value)) continue;
-                    var scalar = ReadOtlpScalar(value);
-                    if (scalar is not null) mapped[key] = scalar;
-                }
-                // A JsonElement cannot outlive a temporary document; this shape is handled
-                // by the caller through the direct object path only.
-            }
-        }
-
-        if (element.TryGetProperty("attributes", out var objectAttributes) &&
-            objectAttributes.ValueKind == JsonValueKind.Object) return objectAttributes;
-
-        return default;
-    }
+    private static JsonElement FindAttributes(JsonElement element) =>
+        element.TryGetProperty("attributes", out var attributes) ? attributes : default;
 
     private static string? ReadAttribute(JsonElement attributes, string name)
     {
-        if (attributes.ValueKind != JsonValueKind.Object) return null;
-        if (attributes.TryGetProperty(name, out var value)) return ReadScalar(value);
+        if (attributes.ValueKind == JsonValueKind.Object)
+            return attributes.TryGetProperty(name, out var value) ? ReadScalar(value) : null;
+
+        if (attributes.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in attributes.EnumerateArray())
+            {
+                if (ReadString(item, "key") != name || !item.TryGetProperty("value", out var value))
+                    continue;
+                return ReadScalar(value);
+            }
+        }
         return null;
     }
 
