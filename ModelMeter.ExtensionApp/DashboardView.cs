@@ -36,7 +36,7 @@ internal sealed class DashboardView : Grid
         header.Children.Add(brand);
         var demo = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, VerticalAlignment = VerticalAlignment.Center };
         demo.Children.Add(new Border { Width = 7, Height = 7, CornerRadius = new CornerRadius(4), Background = B("#FFA3E635") });
-        demo.Children.Add(new TextBlock { Text = "DEMO DATA", FontSize = 9, CharacterSpacing = 90, Foreground = B("#FFA3E635") });
+        demo.Children.Add(new TextBlock { Text = "LOCAL USAGE", FontSize = 9, CharacterSpacing = 90, Foreground = B("#FFA3E635") });
         Grid.SetColumn(demo, 1); header.Children.Add(demo);
         Children.Add(header);
 
