@@ -41,12 +41,13 @@ internal sealed class DashboardView : Grid
         Children.Add(header);
 
         var body = new Grid { Margin = new Thickness(26, 10, 26, 26), ColumnSpacing = 24, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
-        body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(154) });
+        body.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        body.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var nav = new StackPanel { Spacing = 5 };
+        var nav = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 0, 0, 16) };
         foreach (var name in new[] { "Overview", "Providers", "Analytics", "Models", "Sessions", "Quotas" })
         {
-            var button = new Button { Content = name, HorizontalContentAlignment = HorizontalAlignment.Left, Padding = new Thickness(12, 10, 12, 10), Background = name == _active ? B("#FF25282D") : B("#00101113"), Foreground = name == _active ? B("#FFA3E635") : B("#FF969BA5"), BorderThickness = new Thickness(0), CornerRadius = new CornerRadius(8) };
+            var button = new Button { Content = name, HorizontalContentAlignment = HorizontalAlignment.Center, Padding = new Thickness(14, 9, 14, 9), Background = name == _active ? B("#FF292E25") : B("#00101113"), Foreground = name == _active ? B("#FFA3E635") : B("#FF969BA5"), BorderThickness = new Thickness(0), CornerRadius = new CornerRadius(8), FontSize = 12 };
             button.Click += (_, _) => Navigate(name);
             _tabs[name] = button; nav.Children.Add(button);
         }
@@ -54,7 +55,7 @@ internal sealed class DashboardView : Grid
         _page.HorizontalAlignment = HorizontalAlignment.Stretch;
         _page.VerticalAlignment = VerticalAlignment.Stretch;
         _page.HorizontalContentAlignment = HorizontalAlignment.Stretch;
-        Grid.SetColumn(_page, 1); body.Children.Add(_page);
+        Grid.SetRow(_page, 1); body.Children.Add(_page);
         Grid.SetRow(body, 1); Children.Add(body);
         Navigate("Overview");
     }
@@ -64,7 +65,7 @@ internal sealed class DashboardView : Grid
         _active = name;
         foreach (var pair in _tabs)
         {
-            pair.Value.Background = pair.Key == name ? B("#FF25282D") : B("#00101113");
+            pair.Value.Background = pair.Key == name ? B("#FF292E25") : B("#00101113");
             pair.Value.Foreground = pair.Key == name ? B("#FFA3E635") : B("#FF969BA5");
         }
         _page.Content = name switch
