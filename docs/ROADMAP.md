@@ -3,10 +3,10 @@
 ## Phase 1 — Foundation
 - [x] Initialize repository and WidBar WinUI host
 - [x] Premium taskbar preview and flyout navigation
-- [x] Overview, Providers, Analytics, Models, Sessions and Quotas demo screens
+- [x] Overview, Providers, Analytics, Models, Sessions and Quotas dashboard pages
 - [x] Basic settings surface
 - [x] Provider-neutral usage contracts and aggregation
-- [x] Verify Windows widget build and Core tests in GitHub Actions
+- [x] Windows widget build and Core test workflow
 - [ ] Replace temporary MSIX placeholder icons with final brand assets
 - [ ] Verify installation and runtime inside WidBar on a Windows desktop
 
@@ -15,10 +15,12 @@
 - [x] Codex local rollout token_count reader and dashboard integration
 - [x] Gemini CLI opt-in local telemetry reader
 - [x] OpenCode local session/database reader
-- [ ] SQLite persistence, historical import checkpoints, incremental reconciliation and diagnostics
+- [x] Local SQLite persistence, indexes and idempotent upserts
+- [ ] Incremental source checkpoints and safe reconciliation
+- [ ] Background refresh while the widget is active
+- [ ] Import diagnostics and provider-specific recovery guidance
 
 ## Phase 3 — Analytics
-- [x] Local SQLite persistence, indexes and idempotent upserts
 - [ ] Date-range aggregation and model/project breakdowns
 - [ ] Versioned pricing catalogue and manual overrides
 - [ ] Session explorer and export
