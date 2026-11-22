@@ -40,8 +40,8 @@ internal sealed class DashboardView : Grid
         Grid.SetColumn(demo, 1); header.Children.Add(demo);
         Children.Add(header);
 
-        var body = new Grid { Margin = new Thickness(24, 8, 24, 24), ColumnSpacing = 22 };
-        body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(142) });
+        var body = new Grid { Margin = new Thickness(26, 10, 26, 26), ColumnSpacing = 24, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
+        body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(154) });
         body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var nav = new StackPanel { Spacing = 5 };
         foreach (var name in new[] { "Overview", "Providers", "Analytics", "Models", "Sessions", "Quotas" })
@@ -51,6 +51,9 @@ internal sealed class DashboardView : Grid
             _tabs[name] = button; nav.Children.Add(button);
         }
         body.Children.Add(nav);
+        _page.HorizontalAlignment = HorizontalAlignment.Stretch;
+        _page.VerticalAlignment = VerticalAlignment.Stretch;
+        _page.HorizontalContentAlignment = HorizontalAlignment.Stretch;
         Grid.SetColumn(_page, 1); body.Children.Add(_page);
         Grid.SetRow(body, 1); Children.Add(body);
         Navigate("Overview");
@@ -78,13 +81,13 @@ internal sealed class DashboardView : Grid
 
     private UIElement Overview()
     {
-        var p = new StackPanel { Spacing = 15 };
+        var p = new StackPanel { Spacing = 18, HorizontalAlignment = HorizontalAlignment.Stretch };
         var summary = UsageAggregator.Summarize(_records);
         p.Children.Add(Heading("Overview", "Your local AI coding usage, all in one place."));
-        var cards = new Grid { ColumnSpacing = 10 };
+        var cards = new Grid { ColumnSpacing = 12, RowSpacing = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        cards.Children.Add(Metric("TOTAL TOKENS", FormatTokens(summary.TotalTokens), $"{summary.SessionCount:N0} sessions · last 30 days", true));
+        cards.Children.Add(Metric("TOTAL TOKENS", FormatTokens(summary.TotalTokens), "Across all connected local sources", true));
         var hasRecordedEstimate = _records.Any(x => x.EstimatedApiCost.HasValue && x.CostKind == CostDataKind.ApiEquivalentEstimate);
         var costValue = hasRecordedEstimate ? "$" + summary.ApiEquivalentCost.ToString("0.0000") : "Not priced";
         var costNote = hasRecordedEstimate ? "Provider-reported estimate · not an invoice" : "No provider cost estimate available";
@@ -111,7 +114,7 @@ internal sealed class DashboardView : Grid
 
     private UIElement Providers()
     {
-        var p = new StackPanel { Spacing = 12 };
+        var p = new StackPanel { Spacing = 14, HorizontalAlignment = HorizontalAlignment.Stretch };
         p.Children.Add(Heading("Providers", "Local usage sources detected on this device."));
         foreach (var snapshot in _snapshots)
         {
@@ -125,7 +128,7 @@ internal sealed class DashboardView : Grid
 
     private UIElement Analytics()
     {
-        var p = new StackPanel { Spacing = 14 };
+        var p = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Stretch };
         p.Children.Add(Heading("Analytics", "Token breakdown from supported local session records."));
         p.Children.Add(Chart(_records));
         var summary = UsageAggregator.Summarize(_records);
@@ -138,7 +141,7 @@ internal sealed class DashboardView : Grid
 
     private UIElement Models()
     {
-        var p = new StackPanel { Spacing = 11 };
+        var p = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
         p.Children.Add(Heading("Models", "Token usage grouped by model."));
         var models = _records.GroupBy(x => new { x.ProviderId, x.ModelId })
             .Select(g => new { g.Key.ProviderId, g.Key.ModelId, Tokens = g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens) })
@@ -150,7 +153,7 @@ internal sealed class DashboardView : Grid
 
     private UIElement Sessions()
     {
-        var p = new StackPanel { Spacing = 10 };
+        var p = new StackPanel { Spacing = 10, HorizontalAlignment = HorizontalAlignment.Stretch };
         p.Children.Add(Heading("Sessions", "Recent sessions, without conversation contents."));
         var sessions = _records.Where(x => !string.IsNullOrWhiteSpace(x.SessionId)).GroupBy(x => x.SessionId!)
             .Select(g => new { Latest = g.Max(x => x.Timestamp), Project = g.Select(x => x.ProjectName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "Local project", Model = g.OrderByDescending(x => x.Timestamp).First().ModelId, Tokens = g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens) })
@@ -287,6 +290,6 @@ internal sealed class DashboardView : Grid
     private static string ColorForProvider(string id) => id switch { "claude-code" => "#FFD97757", "openai-codex" => "#FF74AA8A", "gemini-cli" => "#FF7DA8EA", "opencode" => "#FFB4A0F5", _ => "#FFA3E635" };
     private static string FormatTokens(long value) => value >= 1_000_000 ? (value / 1_000_000d).ToString("0.##") + "M" : value >= 1_000 ? (value / 1_000d).ToString("0.#") + "K" : value.ToString("N0");
 
-    private static ScrollViewer Scroll(UIElement content) => new() { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+    private static ScrollViewer Scroll(UIElement content) => new() { Content = content, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     private static SolidColorBrush B(string hex) => new(Color.FromArgb(Convert.ToByte(hex[1..3],16), Convert.ToByte(hex[3..5],16), Convert.ToByte(hex[5..7],16), Convert.ToByte(hex[7..9],16)));
 }
