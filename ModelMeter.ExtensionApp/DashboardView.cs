@@ -20,7 +20,7 @@ internal sealed class DashboardView : Grid
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-        var header = new Grid { Padding = new Thickness(24, 20, 24, 14) };
+        var header = new Grid { Margin = new Thickness(24, 20, 24, 14) };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var brand = new StackPanel { Spacing = 3 };
@@ -33,7 +33,7 @@ internal sealed class DashboardView : Grid
         Grid.SetColumn(demo, 1); header.Children.Add(demo);
         Children.Add(header);
 
-        var body = new Grid { Padding = new Thickness(24, 8, 24, 24), ColumnSpacing = 22 };
+        var body = new Grid { Margin = new Thickness(24, 8, 24, 24), ColumnSpacing = 22 };
         body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(142) });
         body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var nav = new StackPanel { Spacing = 5 };
@@ -176,7 +176,7 @@ internal sealed class DashboardView : Grid
 
     private static UIElement Chart()
     {
-        var root = new Grid { Height = 145, Padding = new Thickness(4, 8, 4, 0) };
+        var root = new Grid { Height = 145, Margin = new Thickness(4, 8, 4, 0) };
         for (var i = 0; i < 7; i++) root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var values = new[] { .42, .61, .48, .74, .66, .94, .78 };
         for (var i = 0; i < values.Length; i++)
