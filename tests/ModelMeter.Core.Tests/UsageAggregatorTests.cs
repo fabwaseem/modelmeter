@@ -1,3 +1,4 @@
+using Xunit;
 using ModelMeter.Core.Aggregation;
 using ModelMeter.Core.Models;
 
