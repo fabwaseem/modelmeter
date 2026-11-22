@@ -6,6 +6,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModelMeter.ExtensionApp", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModelMeter.Core", "ModelMeter.Core\\ModelMeter.Core.csproj", "{3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}"
 EndProject
+Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "ModelMeter (Package)", "ModelMeter (Package)\\ModelMeter (Package).wapproj", "{D17E4B5A-7E4B-4A18-8D1B-8D3B18A1C001}"
+EndProject
 Global
  GlobalSection(SolutionConfigurationPlatforms) = preSolution
   Debug|ARM64 = Debug|ARM64
@@ -22,5 +24,17 @@ Global
   {22222222-3333-4444-5555-666666666666}.Release|ARM64.Build.0 = Release|ARM64
   {22222222-3333-4444-5555-666666666666}.Release|x64.ActiveCfg = Release|x64
   {22222222-3333-4444-5555-666666666666}.Release|x64.Build.0 = Release|x64
+  {D17E4B5A-7E4B-4A18-8D1B-8D3B18A1C001}.Debug|ARM64.ActiveCfg = Debug|ARM64
+  {D17E4B5A-7E4B-4A18-8D1B-8D3B18A1C001}.Debug|ARM64.Build.0 = Debug|ARM64
+  {D17E4B5A-7E4B-4A18-8D1B-8D3B18A1C001}.Debug|x64.ActiveCfg = Debug|x64
+  {D17E4B5A-7E4B-4A18-8D1B-8D3B18A1C001}.Debug|x64.Build.0 = Debug|x64
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Debug|ARM64.Build.0 = Debug|Any CPU
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Debug|x64.ActiveCfg = Debug|Any CPU
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Debug|x64.Build.0 = Debug|Any CPU
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Release|ARM64.ActiveCfg = Release|Any CPU
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Release|ARM64.Build.0 = Release|Any CPU
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Release|x64.ActiveCfg = Release|Any CPU
+  {3A6AB83E-CA11-40BA-926A-2E7A8C7D2001}.Release|x64.Build.0 = Release|Any CPU
  EndGlobalSection
 EndGlobal
