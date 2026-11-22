@@ -17,7 +17,7 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
     public override int FlyoutWidth => 760;
     public override int FlyoutHeight => 700;
 
-    private sealed class WidgetSettings
+    internal sealed class WidgetSettings
     {
         public bool ShowTokens { get; set; } = true;
         public bool ShowProviderCount { get; set; } = true;
