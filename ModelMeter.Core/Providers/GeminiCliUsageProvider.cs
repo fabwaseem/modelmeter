@@ -114,7 +114,7 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
         {
             attributes = FindAttributes(root);
             timestamp = ReadTimestamp(root);
-            return timestamp != default && attributes.ValueKind == JsonValueKind.Object;
+            return timestamp != default && attributes.ValueKind is JsonValueKind.Object or JsonValueKind.Array;
         }
 
         if (root.TryGetProperty("resourceLogs", out var resourceLogs) &&
@@ -134,7 +134,7 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
                         if (body != "gemini_cli.api_response") continue;
                         attributes = FindAttributes(log);
                         timestamp = ReadTimestamp(log);
-                        return timestamp != default && attributes.ValueKind == JsonValueKind.Object;
+                        return timestamp != default && attributes.ValueKind is JsonValueKind.Object or JsonValueKind.Array;
                     }
                 }
             }
@@ -148,7 +148,7 @@ public sealed class GeminiCliUsageProvider : IUsageProvider
 
     private static string? ReadAttribute(JsonElement attributes, string name)
     {
-        if (attributes.ValueKind == JsonValueKind.Object)
+        if (attributes.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
             return attributes.TryGetProperty(name, out var value) ? ReadScalar(value) : null;
 
         if (attributes.ValueKind == JsonValueKind.Array)
