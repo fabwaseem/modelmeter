@@ -64,6 +64,8 @@ jobs:
           Export-Certificate -Cert $cert -FilePath "$env:GITHUB_WORKSPACE\ModelMeter-Test.cer" | Out-Null
           "CERT_PATH=$env:RUNNER_TEMP\ModelMeter-Test.pfx" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - uses: microsoft/setup-msbuild@v2
+
       - name: Build signed MSIX bundle
         shell: pwsh
         run: |
