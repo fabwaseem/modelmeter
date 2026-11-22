@@ -120,6 +120,8 @@ internal sealed class DashboardView : Grid
             var providerGrid = new Grid { ColumnSpacing = 12, RowSpacing = 10, HorizontalAlignment = HorizontalAlignment.Stretch };
             providerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             providerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            for (var row = 0; row < (grouped.Length + 1) / 2; row++)
+                providerGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             for (var i = 0; i < grouped.Length; i++)
             {
                 var group = grouped[i];
