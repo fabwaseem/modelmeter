@@ -67,8 +67,9 @@ public sealed class OpenCodeUsageProvider : IUsageProvider
         var sessionColumns = hasSession
             ? await GetColumnsAsync(connection, "session", cancellationToken)
             : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var directoryExpression = sessionColumns.Contains("directory") ? "s.directory" : "NULL";
-        var join = sessionColumns.Contains("id") ? "LEFT JOIN session s ON s.id = m.session_id" : "";
+        var hasSessionId = sessionColumns.Contains("id");
+        var directoryExpression = hasSessionId && sessionColumns.Contains("directory") ? "s.directory" : "NULL";
+        var join = hasSessionId ? "LEFT JOIN session s ON s.id = m.session_id" : "";
         var sql = $"""
             SELECT m.id, m.session_id, m.time_created, m.data, {directoryExpression}
             FROM message m
@@ -107,10 +108,6 @@ public sealed class OpenCodeUsageProvider : IUsageProvider
 
                 var model = ReadString(root, "modelID") ??
                             ReadNestedString(root, "model", "modelID") ?? "unknown";
-                var provider = ReadString(root, "providerID") ??
-                               ReadNestedString(root, "model", "providerID");
-                if (provider is not null && !IsOpenCodeModelProvider(provider)) { /* model vendor is metadata only */ }
-
                 var input = ReadLong(tokens, "input");
                 var output = ReadLong(tokens, "output");
                 var reasoning = ReadLong(tokens, "reasoning");
@@ -208,7 +205,6 @@ public sealed class OpenCodeUsageProvider : IUsageProvider
         return string.IsNullOrWhiteSpace(label) ? null : label;
     }
 
-    private static bool IsOpenCodeModelProvider(string provider) => provider.Length > 0;
 
     private static string ResolveDatabasePath()
     {
