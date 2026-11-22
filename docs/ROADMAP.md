@@ -14,7 +14,7 @@
 - [x] Claude Code local JSONL usage reader and dashboard integration
 - [x] Codex local rollout token_count reader and dashboard integration
 - [x] Gemini CLI opt-in local telemetry reader
-- [ ] OpenCode local session/database reader
+- [x] OpenCode local session/database reader
 - [ ] SQLite persistence, historical import checkpoints, incremental reconciliation and diagnostics
 
 ## Phase 3 — Analytics
