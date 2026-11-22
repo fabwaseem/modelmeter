@@ -6,14 +6,16 @@
 - [x] Overview, Providers, Analytics, Models, Sessions and Quotas demo screens
 - [x] Basic settings surface
 - [x] Provider-neutral usage contracts and aggregation
-- [ ] Complete MSIX packaging assets and local Windows build verification
+- [x] Verify Windows widget build and Core tests in GitHub Actions
+- [ ] Replace temporary MSIX placeholder icons with final brand assets
+- [ ] Verify installation and runtime inside WidBar on a Windows desktop
 
 ## Phase 2 — Provider ingestion
-- [ ] Claude Code JSONL and stats-cache readers
-- [ ] Codex local session reader
+- [x] Claude Code local JSONL usage reader and dashboard integration
+- [x] Codex local rollout token_count reader and dashboard integration
 - [ ] Gemini CLI opt-in local telemetry reader
 - [ ] OpenCode local session/database reader
-- [ ] Historical import, incremental reconciliation and diagnostics
+- [ ] SQLite persistence, historical import checkpoints, incremental reconciliation and diagnostics
 
 ## Phase 3 — Analytics
 - [ ] SQLite persistence and schema migrations
