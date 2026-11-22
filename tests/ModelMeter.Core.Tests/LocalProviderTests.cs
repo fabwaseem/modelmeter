@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using System.Text;
 using ModelMeter.Core.Providers;
 using Xunit;
@@ -149,6 +150,54 @@ public sealed class LocalProviderTests
             Assert.Equal(10, records[1].CacheReadTokens);
             Assert.Equal(15, records[1].OutputTokens);
             Assert.All(records, record => Assert.DoesNotContain("private", record.Source));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public async Task OpenCode_ImportsAssistantUsageFromReadOnlyDatabase()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var databasePath = Path.Combine(root, "opencode.db");
+        try
+        {
+            var connectionString = new SqliteConnectionStringBuilder
+            {
+                DataSource = databasePath,
+                Pooling = false
+            }.ToString();
+            await using (var connection = new SqliteConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = """
+                    CREATE TABLE session (id TEXT PRIMARY KEY, directory TEXT);
+                    CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT);
+                    INSERT INTO session VALUES ('ses-1', 'C:\\work\\project-c');
+                    INSERT INTO message VALUES ('msg-user', 'ses-1', 1795345200000,
+                      '{"role":"user","content":"private prompt"}');
+                    INSERT INTO message VALUES ('msg-assistant', 'ses-1', 1795345260000,
+                      '{"role":"assistant","modelID":"claude-sonnet-4","providerID":"anthropic","cost":0.012,"time":{"created":1795345260000},"tokens":{"input":100,"output":30,"reasoning":5,"cache":{"read":20,"write":10}}}');
+                    """;
+                await command.ExecuteNonQueryAsync();
+            }
+
+            var provider = new OpenCodeUsageProvider(databasePath);
+            var records = await provider.GetUsageAsync(DateTimeOffset.Parse("2026-11-22T00:00:00Z"),
+                DateTimeOffset.Parse("2026-11-23T00:00:00Z"), CancellationToken.None);
+
+            var record = Assert.Single(records);
+            Assert.Equal("claude-sonnet-4", record.ModelId);
+            Assert.Equal("ses-1", record.SessionId);
+            Assert.Equal("project-c", record.ProjectName);
+            Assert.Equal(100, record.InputTokens);
+            Assert.Equal(35, record.OutputTokens);
+            Assert.Equal(20, record.CacheReadTokens);
+            Assert.Equal(10, record.CacheWriteTokens);
+            Assert.Equal(0.012m, record.EstimatedApiCost);
+            Assert.Equal(ModelMeter.Core.Models.CostDataKind.ApiEquivalentEstimate, record.CostKind);
+            Assert.DoesNotContain(records, x => x.Source.Contains("private", StringComparison.OrdinalIgnoreCase));
         }
         finally { Directory.Delete(root, true); }
     }
