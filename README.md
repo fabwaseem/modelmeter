@@ -4,15 +4,15 @@
 
 ModelMeter is a local-first Windows 11 WidBar widget for understanding AI coding-tool usage across providers. It brings token usage, model activity, API-equivalent cost estimates, sessions and supported quota information into a compact taskbar preview and a rich flyout.
 
- > **Current milestone:** Claude Code and Codex local usage readers are connected to the WidBar dashboard. The app scans the last 30 days at startup, deduplicates normalized usage records into a local SQLite database, and shows imported token usage in the widget. Background refresh and additional providers are still in progress.
+> **Current milestone:** Four local usage readers are connected: Claude Code, OpenAI Codex, Gemini CLI and OpenCode. ModelMeter imports normalized usage metadata into a local SQLite database and displays it across the WidBar dashboard. Incremental source checkpoints and background refresh are the next ingestion milestones.
 
-## First milestone
-- Native WidBar widget host using the official standalone template
-- Compact taskbar preview
-- Flyout with Overview, Providers, Analytics, Models, Sessions and Quotas
-- Settings surface
+## Current features
+- Native WidBar widget with a compact taskbar preview and rich flyout
+- Overview, Providers, Analytics, Models, Sessions and Quotas pages
+- Local readers for Claude Code, Codex, Gemini CLI and OpenCode
+- SQLite persistence with idempotent usage-event upserts
+- Settings surface and privacy-first local processing
 - Premium dark visual system with restrained lime accent
-- Provider-neutral domain contracts and aggregation
 
 ## Provider support
 | Provider | Local source | Status |
@@ -22,9 +22,11 @@ ModelMeter is a local-first Windows 11 WidBar widget for understanding AI coding
 | Gemini CLI | Explicitly opted-in local OpenTelemetry output (`gemini_cli.api_response`) | Implemented; opt-in local telemetry file |
 | OpenCode | Local SQLite `opencode.db` assistant message metadata | Implemented; wired to dashboard |
 
-Gemini CLI requires local telemetry to be enabled and written to a file; ModelMeter reads API-response token counts only and never imports prompt/response bodies. OpenCode is opened read-only and only assistant-message token metadata is imported; message parts and transcript content are never read. The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text. Each startup performs a read-only scan of provider source files and upserts normalized usage metadata into `%LOCALAPPDATA%\\ModelMeter\\usage.db`. The database contains usage counts and short project labels only, not raw source paths or conversation contents. Background refresh and incremental source checkpoints are not implemented yet.
+Gemini CLI requires local telemetry to be enabled and written to a file; ModelMeter reads API-response token counts only and never imports prompt/response bodies. OpenCode is opened read-only and only assistant-message token metadata is imported; message parts and transcript content are never read. The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text.
 
-ModelMeter will distinguish subscription quota, actual API billing and API-equivalent estimates. It will never present an estimate as an invoice or infer a quota reset time.
+Each startup currently scans the supported provider sources for the last 30 days and upserts normalized usage metadata into `%LOCALAPPDATA%\\ModelMeter\\usage.db`. The database contains usage counts and short project labels only, not raw source paths or conversation contents. Incremental source checkpoints and automatic background refresh are not implemented yet.
+
+ModelMeter distinguishes subscription quota, actual API billing and API-equivalent estimates. It will never present an estimate as an invoice or infer a quota reset time. A quota is shown only when a provider supplies verifiable quota data.
 
 ## Build
 Requirements: Windows 11, .NET 10 SDK, Visual Studio with WinUI 3 / Windows App SDK tooling, and WidBar installed.
@@ -32,7 +34,7 @@ Requirements: Windows 11, .NET 10 SDK, Visual Studio with WinUI 3 / Windows App 
 Open `ModelMeter.sln`, select `Debug | x64`, and build the packaging project. For command-line builds from Developer PowerShell:
 
 ```powershell
-msbuild "ModelMeter (Package)\ModelMeter (Package).wapproj" /p:Configuration=Debug /p:Platform=x64 /restore
+msbuild "ModelMeter (Package)\\ModelMeter (Package).wapproj" /p:Configuration=Debug /p:Platform=x64 /restore
 ```
 
 Deploy/register the MSIX package, open WidBar's Layout page, refresh the widget catalog, then add ModelMeter.
