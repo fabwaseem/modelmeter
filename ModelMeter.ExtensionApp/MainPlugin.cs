@@ -45,7 +45,8 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
         var providers = new IUsageProvider[]
         {
             new ClaudeCodeUsageProvider(),
-            new CodexUsageProvider()
+            new CodexUsageProvider(),
+            new GeminiCliUsageProvider()
         };
         var from = DateTimeOffset.Now.AddDays(-30);
         var to = DateTimeOffset.Now;
