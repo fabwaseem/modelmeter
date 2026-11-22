@@ -83,32 +83,73 @@ internal sealed class DashboardView : Grid
     {
         var p = new StackPanel { Spacing = 18, HorizontalAlignment = HorizontalAlignment.Stretch };
         var summary = UsageAggregator.Summarize(_records);
-        p.Children.Add(Heading("Overview", "Your local AI coding usage, all in one place."));
+        p.Children.Add(Heading("Overview", "A clear picture of your AI development activity."));
+
+        var hasRecordedEstimate = _records.Any(x => x.EstimatedApiCost.HasValue && x.CostKind == CostDataKind.ApiEquivalentEstimate);
+        var costValue = hasRecordedEstimate ? "$" + summary.ApiEquivalentCost.ToString("0.0000") : "Not priced";
+        var costNote = hasRecordedEstimate ? "API-equivalent estimate · not an invoice" : "No provider cost estimate available";
+
         var cards = new Grid { ColumnSpacing = 12, RowSpacing = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        cards.Children.Add(Metric("TOTAL TOKENS", FormatTokens(summary.TotalTokens), "Across all connected local sources", true));
-        var hasRecordedEstimate = _records.Any(x => x.EstimatedApiCost.HasValue && x.CostKind == CostDataKind.ApiEquivalentEstimate);
-        var costValue = hasRecordedEstimate ? "$" + summary.ApiEquivalentCost.ToString("0.0000") : "Not priced";
-        var costNote = hasRecordedEstimate ? "Provider-reported estimate · not an invoice" : "No provider cost estimate available";
-        var cost = Metric("API-EQUIVALENT COST", _settings.ShowCost ? costValue : "Hidden", _settings.ShowCost ? costNote : "Cost display disabled");
-        Grid.SetColumn(cost, 1); cards.Children.Add(cost); p.Children.Add(cards);
-        p.Children.Add(Section("USAGE TREND", "LAST 7 DAYS"));
+        cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        cards.Children.Add(Metric("TOTAL TOKENS", FormatTokens(summary.TotalTokens), "Across connected local sources", true));
+        var sessions = Metric("SESSIONS", summary.SessionCount.ToString("N0"), "Unique sessions · last 30 days");
+        Grid.SetColumn(sessions, 1); cards.Children.Add(sessions);
+        var input = Metric("INPUT TOKENS", FormatTokens(summary.InputTokens), "Prompt and context tokens");
+        Grid.SetRow(input, 1); cards.Children.Add(input);
+        var output = Metric("OUTPUT TOKENS", FormatTokens(summary.OutputTokens), "Generated response tokens");
+        Grid.SetRow(output, 1); Grid.SetColumn(output, 1); cards.Children.Add(output);
+        p.Children.Add(cards);
+
+        if (_settings.ShowCost)
+            p.Children.Add(Metric("API-EQUIVALENT COST", costValue, costNote));
+
+        p.Children.Add(Section("USAGE OVER TIME", "DAILY · LAST 7 DAYS"));
         p.Children.Add(Chart(_records));
+
         p.Children.Add(Section("PROVIDER ACTIVITY", "LAST 30 DAYS"));
-        var grouped = _records.GroupBy(x => x.ProviderId).OrderByDescending(g => g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens)).ToArray();
+        var grouped = _records.GroupBy(x => x.ProviderId)
+            .OrderByDescending(g => g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens)).ToArray();
         if (grouped.Length == 0)
-            p.Children.Add(EmptyState("No local usage events found", "Use Claude Code or Codex, then reopen ModelMeter to import supported local usage records."));
+            p.Children.Add(EmptyState("No local usage events found", "Use a supported AI coding tool, then reopen ModelMeter to import its local usage metadata."));
         else
         {
-            var max = grouped.Max(g => g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens));
-            foreach (var group in grouped)
+            var max = Math.Max(1, grouped.Max(g => g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens)));
+            var providerGrid = new Grid { ColumnSpacing = 12, RowSpacing = 10, HorizontalAlignment = HorizontalAlignment.Stretch };
+            providerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            providerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            for (var i = 0; i < grouped.Length; i++)
             {
+                var group = grouped[i];
                 var total = group.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens);
-                p.Children.Add(Provider(ProviderName(group.Key), FormatTokens(total), max == 0 ? 0 : (double)total / max, ColorForProvider(group.Key)));
+                var card = ProviderCard(ProviderName(group.Key), "Local usage imported", FormatTokens(total), ColorForProvider(group.Key));
+                Grid.SetRow(card, i / 2);
+                Grid.SetColumn(card, i % 2);
+                providerGrid.Children.Add(card);
             }
+            p.Children.Add(providerGrid);
         }
-        p.Children.Add(new TextBlock { Text = "Imported from local session metadata. Prompts, responses and tool output are not displayed or retained.", FontSize = 10, Foreground = B("#FF777D87"), TextWrapping = TextWrapping.Wrap });
+
+        p.Children.Add(Section("RECENT SESSIONS", "LATEST ACTIVITY"));
+        var recent = _records.Where(x => !string.IsNullOrWhiteSpace(x.SessionId))
+            .GroupBy(x => x.SessionId!)
+            .Select(g => new
+            {
+                Latest = g.Max(x => x.Timestamp),
+                Project = g.Select(x => x.ProjectName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "Local project",
+                Model = g.OrderByDescending(x => x.Timestamp).First().ModelId,
+                Tokens = g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens)
+            })
+            .OrderByDescending(x => x.Latest).Take(4).ToArray();
+        if (recent.Length == 0)
+            p.Children.Add(EmptyState("No recent sessions", "Your recent local sessions will appear here when usage metadata is available."));
+        else
+            foreach (var session in recent)
+                p.Children.Add(Session(session.Project, session.Model + " · " + session.Latest.ToLocalTime().ToString("MMM d, h:mm tt"), FormatTokens(session.Tokens)));
+
+        p.Children.Add(new TextBlock { Text = "LOCAL-FIRST BY DESIGN  ·  Prompts, responses and tool output are never displayed or retained.", FontSize = 9, CharacterSpacing = 25, Foreground = B("#FF777D87"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) });
         return Scroll(p);
     }
 
