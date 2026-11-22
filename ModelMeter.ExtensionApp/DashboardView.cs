@@ -210,19 +210,19 @@ internal sealed class DashboardView : Grid
 
     private static UIElement ProviderCard(string name, string status, string tokens, string color)
     {
-        var g = new Grid { Padding = new Thickness(13), ColumnSpacing = 12 };
+        var g = new Grid { ColumnSpacing = 12 };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var s = new StackPanel { Spacing = 5 };
         s.Children.Add(new TextBlock { Text = name, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
         s.Children.Add(new TextBlock { Text = status, FontSize = 10, Foreground = B("#FF969BA5") });
         g.Children.Add(s);
         var n = new TextBlock { Text = tokens, FontSize = 14, Foreground = B(color), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(n, 1); g.Children.Add(n);
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Child = g };
+        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(13), Child = g };
     }
 
     private static UIElement Session(string project, string details, string tokens)
     {
-        var g = new Grid { Padding = new Thickness(13), ColumnSpacing = 10 };
+        var g = new Grid { ColumnSpacing = 10 };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var s = new StackPanel { Spacing = 4 };
         s.Children.Add(new TextBlock { Text = project, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
