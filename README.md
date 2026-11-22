@@ -4,7 +4,7 @@
 
 ModelMeter is a local-first Windows 11 WidBar widget for understanding AI coding-tool usage across providers. It brings token usage, model activity, API-equivalent cost estimates, sessions and supported quota information into a compact taskbar preview and a rich flyout.
 
- > **Current milestone:** Claude Code and Codex local usage readers are connected to the WidBar dashboard. The app scans the last 30 days at startup and shows real imported token usage when supported token events exist. Data is currently held in memory for the running widget; SQLite persistence, background refresh and additional providers are still in progress.
+ > **Current milestone:** Claude Code and Codex local usage readers are connected to the WidBar dashboard. The app scans the last 30 days at startup, deduplicates normalized usage records into a local SQLite database, and shows imported token usage in the widget. Background refresh and additional providers are still in progress.
 
 ## First milestone
 - Native WidBar widget host using the official standalone template
@@ -22,7 +22,7 @@ ModelMeter is a local-first Windows 11 WidBar widget for understanding AI coding
 | Gemini CLI | Explicitly opted-in local OpenTelemetry output | Planned |
 | OpenCode | Local session/database data | Planned |
 
-The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text. Each startup performs a read-only 30-day scan; the current build does not yet persist imported records or monitor files in the background.
+The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text. Each startup performs a read-only scan of provider source files and upserts normalized usage metadata into `%LOCALAPPDATA%\\ModelMeter\\usage.db`. The database contains usage counts and short project labels only, not raw source paths or conversation contents. Background refresh and incremental source checkpoints are not implemented yet.
 
 ModelMeter will distinguish subscription quota, actual API billing and API-equivalent estimates. It will never present an estimate as an invoice or infer a quota reset time.
 
