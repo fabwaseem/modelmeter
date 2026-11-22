@@ -287,7 +287,7 @@ internal sealed class DashboardView : Grid
         return g;
     }
 
-    private static UIElement ProviderCard(string name, string status, string tokens, string color)
+    private static Border ProviderCard(string name, string status, string tokens, string color)
     {
         var g = new Grid { ColumnSpacing = 12 };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
