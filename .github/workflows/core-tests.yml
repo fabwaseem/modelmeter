@@ -1,4 +1,4 @@
-name: Core tests
+name: Windows build and core tests
 
 on:
   push:
@@ -7,12 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet restore tests/ModelMeter.Core.Tests/ModelMeter.Core.Tests.csproj
-      - run: dotnet test tests/ModelMeter.Core.Tests/ModelMeter.Core.Tests.csproj --configuration Release --no-restore
+      - name: Restore and build WidBar widget
+        run: dotnet build ModelMeter.ExtensionApp/ModelMeter.ExtensionApp.csproj --configuration Release -p:Platform=x64
+      - name: Run core tests
+        run: dotnet test tests/ModelMeter.Core.Tests/ModelMeter.Core.Tests.csproj --configuration Release
