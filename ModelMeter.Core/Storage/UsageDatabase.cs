@@ -32,7 +32,8 @@ public sealed class UsageDatabase : IAsyncDisposable
         {
             DataSource = _databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Shared
+            Cache = SqliteCacheMode.Shared,
+            Pooling = false
         }.ToString());
         await _connection.OpenAsync(cancellationToken);
 
