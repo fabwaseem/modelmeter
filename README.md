@@ -4,7 +4,7 @@
 
 ModelMeter is a local-first Windows 11 WidBar widget for understanding AI coding-tool usage across providers. It brings token usage, model activity, API-equivalent cost estimates, sessions and supported quota information into a compact taskbar preview and a rich flyout.
 
-> **Current milestone:** The local Claude Code and Codex usage readers are implemented and covered by Windows CI tests. The UI still needs to be connected to these readers; until that integration lands, its figures remain illustrative demo data.
+ > **Current milestone:** Claude Code and Codex local usage readers are connected to the WidBar dashboard. The app scans the last 30 days at startup and shows real imported token usage when supported token events exist. Data is currently held in memory for the running widget; SQLite persistence, background refresh and additional providers are still in progress.
 
 ## First milestone
 - Native WidBar widget host using the official standalone template
@@ -17,12 +17,12 @@ ModelMeter is a local-first Windows 11 WidBar widget for understanding AI coding
 ## Provider support
 | Provider | Local source | Status |
 |---|---|---|
-| Claude Code | `~/.claude/projects/**/*.jsonl` assistant usage metadata | Reader implemented; UI integration pending |
-| OpenAI Codex | `$CODEX_HOME/sessions` and `archived_sessions` rollout JSONL `token_count` events | Reader implemented; UI integration pending |
+| Claude Code | `~/.claude/projects/**/*.jsonl` assistant usage metadata | Implemented; wired to dashboard |
+| OpenAI Codex | `$CODEX_HOME/sessions` and `archived_sessions` rollout JSONL `token_count` events | Implemented; wired to dashboard |
 | Gemini CLI | Explicitly opted-in local OpenTelemetry output | Planned |
 | OpenCode | Local session/database data | Planned |
 
-The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text.
+The readers return token metadata only. They do not retain message bodies, tool calls, tool outputs, or full working-directory paths. Codex usage is available only when the local rollout contains `token_count` events; interactive sessions without those events cannot be reconstructed from transcript text. Each startup performs a read-only 30-day scan; the current build does not yet persist imported records or monitor files in the background.
 
 ModelMeter will distinguish subscription quota, actual API billing and API-equivalent estimates. It will never present an estimate as an invoice or infer a quota reset time.
 
