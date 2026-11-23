@@ -103,7 +103,7 @@ public sealed class CodexUsageProvider : IUsageProvider
                     continue;
 
                 var timestamp = ReadTimestamp(root, "timestamp");
-                if (timestamp is null || timestamp < from || timestamp > to) continue;
+                if (timestamp is null || timestamp > to) continue;
 
                 var last = info.TryGetProperty("last_token_usage", out var lastUsage) &&
                            lastUsage.ValueKind == JsonValueKind.Object;
@@ -144,6 +144,8 @@ public sealed class CodexUsageProvider : IUsageProvider
                     previousCached = Math.Max(previousCached, usageCached);
                     previousOutput = Math.Max(previousOutput, usageOutput);
                 }
+                // Older cumulative snapshots establish the baseline but are outside the reporting window.
+                if (timestamp < from) continue;
                 if (input == 0 && cached == 0 && output == 0) continue;
 
                 sessionId ??= Path.GetFileNameWithoutExtension(file);
