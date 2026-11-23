@@ -71,12 +71,37 @@ public sealed class UsageDatabase : IAsyncDisposable
         await using var command = connection.CreateCommand();
         command.Transaction = (SqliteTransaction)transaction;
         command.CommandText = """
-            INSERT OR IGNORE INTO usage_records
+            INSERT INTO usage_records
             (id, provider_id, model_id, session_id, project_name, timestamp_utc,
              input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
              estimated_api_cost, cost_kind, source)
             VALUES ($id, $provider, $model, $session, $project, $timestamp,
-                    $input, $output, $cacheRead, $cacheWrite, $cost, $costKind, $source);
+                    $input, $output, $cacheRead, $cacheWrite, $cost, $costKind, $source)
+            ON CONFLICT(id) DO UPDATE SET
+                provider_id = excluded.provider_id,
+                model_id = excluded.model_id,
+                session_id = excluded.session_id,
+                project_name = excluded.project_name,
+                timestamp_utc = excluded.timestamp_utc,
+                input_tokens = excluded.input_tokens,
+                output_tokens = excluded.output_tokens,
+                cache_read_tokens = excluded.cache_read_tokens,
+                cache_write_tokens = excluded.cache_write_tokens,
+                estimated_api_cost = excluded.estimated_api_cost,
+                cost_kind = excluded.cost_kind,
+                source = excluded.source
+            WHERE provider_id IS NOT excluded.provider_id
+               OR model_id IS NOT excluded.model_id
+               OR session_id IS NOT excluded.session_id
+               OR project_name IS NOT excluded.project_name
+               OR timestamp_utc IS NOT excluded.timestamp_utc
+               OR input_tokens IS NOT excluded.input_tokens
+               OR output_tokens IS NOT excluded.output_tokens
+               OR cache_read_tokens IS NOT excluded.cache_read_tokens
+               OR cache_write_tokens IS NOT excluded.cache_write_tokens
+               OR estimated_api_cost IS NOT excluded.estimated_api_cost
+               OR cost_kind IS NOT excluded.cost_kind
+               OR source IS NOT excluded.source;
             """;
 
         var parameters = new[]
