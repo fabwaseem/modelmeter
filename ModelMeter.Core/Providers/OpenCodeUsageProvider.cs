@@ -70,15 +70,21 @@ public sealed class OpenCodeUsageProvider : IUsageProvider
         var hasSessionId = sessionColumns.Contains("id");
         var directoryExpression = hasSessionId && sessionColumns.Contains("directory") ? "s.directory" : "NULL";
         var join = hasSessionId ? "LEFT JOIN session s ON s.id = m.session_id" : "";
+        // time_created is the indexed source timestamp used as the fallback timestamp below.
+        // Restrict the read window in SQLite so large OpenCode histories do not require parsing
+        // every message JSON document on each ModelMeter scan.
         var sql = $"""
             SELECT m.id, m.session_id, m.time_created, m.data, {directoryExpression}
             FROM message m
             {join}
+            WHERE m.time_created >= $fromMs AND m.time_created <= $toMs
             ORDER BY m.time_created
             """;
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
+        command.Parameters.AddWithValue("$fromMs", from.ToUnixTimeMilliseconds());
+        command.Parameters.AddWithValue("$toMs", to.ToUnixTimeMilliseconds());
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var seen = new HashSet<string>(StringComparer.Ordinal);
 
