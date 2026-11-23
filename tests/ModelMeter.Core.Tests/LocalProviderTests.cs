@@ -208,6 +208,8 @@ public sealed class LocalProviderTests
                       '{"role":"user","content":"private prompt"}');
                     INSERT INTO message VALUES ('msg-assistant', 'ses-1', 1795345260000,
                       '{"role":"assistant","modelID":"claude-sonnet-4","providerID":"anthropic","cost":0.012,"time":{"created":1795345260000},"tokens":{"input":100,"output":30,"reasoning":5,"cache":{"read":20,"write":10}}}');
+                    INSERT INTO message VALUES ('msg-old', 'ses-1', 1795258800000,
+                      '{"role":"assistant","modelID":"claude-opus-4","time":{"created":1795258800000},"tokens":{"input":900,"output":400,"reasoning":0,"cache":{"read":0,"write":0}}}');
                     """;
                 await command.ExecuteNonQueryAsync();
             }
