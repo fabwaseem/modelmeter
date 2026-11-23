@@ -122,6 +122,35 @@ public sealed class LocalProviderTests
     }
 
     [Fact]
+    public async Task Codex_UsesPreWindowCumulativeSnapshotsAsBaselineWithoutImportingThem()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var sessions = Path.Combine(root, "sessions");
+        Directory.CreateDirectory(sessions);
+        try
+        {
+            var jsonl = """
+                {"type":"session_meta","payload":{"id":"s-window"}}
+                {"timestamp":"2026-11-21T23:00:00Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":1000,"cached_input_tokens":300,"output_tokens":100}}}}
+                {"timestamp":"2026-11-22T10:02:00Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":1150,"cached_input_tokens":350,"output_tokens":140}}}}
+                """;
+            await File.WriteAllTextAsync(Path.Combine(sessions, "rollout-window.jsonl"), jsonl, Encoding.UTF8);
+
+            var provider = new CodexUsageProvider(root);
+            var records = await provider.GetUsageAsync(
+                DateTimeOffset.Parse("2026-11-22T00:00:00Z"),
+                DateTimeOffset.Parse("2026-11-23T00:00:00Z"),
+                CancellationToken.None);
+
+            var record = Assert.Single(records);
+            Assert.Equal(100, record.InputTokens);
+            Assert.Equal(50, record.CacheReadTokens);
+            Assert.Equal(40, record.OutputTokens);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
     public async Task GeminiCli_ImportsOnlyApiResponseTokenMetadataFromLocalTelemetry()
     {
         var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
