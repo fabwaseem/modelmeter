@@ -4,7 +4,7 @@
  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
  IgnorableNamespaces="uap uap3 rescap">
-  <Identity Name="ModelMeter.Widget" Publisher="CN=ModelMeter-Test" Version="0.1.0.0" />
+  <Identity Name="ModelMeter.Widget" Publisher="CN=ModelMeter-Test" Version="0.1.1.0" />
   <Properties><DisplayName>ModelMeter</DisplayName><PublisherDisplayName>fabwaseem</PublisherDisplayName><Logo>Images\StoreLogo.png</Logo></Properties>
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
