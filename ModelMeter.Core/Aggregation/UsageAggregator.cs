@@ -15,7 +15,8 @@ public static class UsageAggregator
             CacheReadTokens = items.Sum(x => x.CacheReadTokens),
             CacheWriteTokens = items.Sum(x => x.CacheWriteTokens),
             ApiEquivalentCost = items.Sum(x => x.EstimatedApiCost ?? 0m),
-            SessionCount = items.Select(x => x.SessionId).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().Count(),
+            SessionCount = items.Where(x => !string.IsNullOrWhiteSpace(x.SessionId))
+                .Select(x => (x.ProviderId, x.SessionId)).Distinct().Count(),
             ActiveProviderCount = items.Select(x => x.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase).Count()
         };
     }
