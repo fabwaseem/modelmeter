@@ -74,20 +74,20 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           $bundle = Get-ChildItem -Path "ModelMeter (Package)" -Filter "*.msixbundle" -Recurse | Select-Object -First 1
           if (-not $bundle) { throw "MSIX bundle was not produced." }
-          Copy-Item $bundle.FullName "dist/ModelMeter-0.1.0-beta.1.msixbundle"
+          Copy-Item $bundle.FullName "dist/ModelMeter-0.1.1-beta.2.msixbundle"
           Copy-Item "ModelMeter-Test.cer" "dist/ModelMeter-Test.cer"
           Copy-Item "release/install.ps1" "dist/install.ps1"
 
       - name: Publish GitHub test release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.0-beta.1
-          name: ModelMeter 0.1.0 Beta 1
+          tag_name: v0.1.1-beta.2
+          name: ModelMeter 0.1.1 Beta 2
           target_commitish: ${{ github.sha }}
           prerelease: true
           make_latest: false
           generate_release_notes: true
           files: |
-            dist/ModelMeter-0.1.0-beta.1.msixbundle
+            dist/ModelMeter-0.1.1-beta.2.msixbundle
             dist/ModelMeter-Test.cer
             dist/install.ps1
