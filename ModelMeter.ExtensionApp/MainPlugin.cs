@@ -70,6 +70,10 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
                     StatusMessage = $"Imported {records.Count(x => x.ProviderId == provider.ProviderId):N0} usage events"
                 };
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 var error = new ProviderSnapshot
@@ -78,7 +82,7 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
                     DisplayName = provider.DisplayName,
                     State = ProviderState.Error,
                     LastUpdatedAt = DateTimeOffset.Now,
-                    StatusMessage = ex.GetType().Name
+                    StatusMessage = DescribeProviderError(ex)
                 };
                 if (snapshot is null) snapshots.Add(error);
                 else snapshots[^1] = error;
@@ -92,10 +96,19 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
             await database.UpsertAsync(records);
             _usageRecords = await database.GetUsageAsync(from, to);
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // Keep the live scan usable if local persistence is unavailable.
+            // Keep the live scan usable if local persistence is unavailable, but make the
+            // degraded state visible instead of silently implying that history was saved.
             _usageRecords = records;
+            for (var i = 0; i < snapshots.Count; i++)
+            {
+                if (snapshots[i].State == ProviderState.Connected)
+                    snapshots[i] = snapshots[i] with
+                    {
+                        StatusMessage = (snapshots[i].StatusMessage ?? "Usage scanned") + " · history not saved"
+                    };
+            }
         }
 
         _providerSnapshots = snapshots;
@@ -149,6 +162,17 @@ public sealed class MainPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IW
     public void OnFlyoutShown() { }
     public void OnFlyoutHidden() { }
     public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private static string DescribeProviderError(Exception exception) => exception switch
+    {
+        UnauthorizedAccessException => "Access denied · check local file permissions",
+        DirectoryNotFoundException => "Usage directory not found",
+        FileNotFoundException => "Usage file not found",
+        IOException => "Could not read local usage files",
+        JsonException => "Usage data format could not be parsed",
+        OperationCanceledException => "Scan cancelled",
+        _ => "Provider scan failed · " + exception.GetType().Name
+    };
 
     private static string FormatTokens(long value) => value >= 1_000_000
         ? (value / 1_000_000d).ToString("0.##") + "M"
