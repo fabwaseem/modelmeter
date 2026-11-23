@@ -136,7 +136,7 @@ internal sealed class DashboardView : Grid
 
         p.Children.Add(Section("RECENT SESSIONS", "LATEST ACTIVITY"));
         var recent = _records.Where(x => !string.IsNullOrWhiteSpace(x.SessionId))
-            .GroupBy(x => x.SessionId!)
+            .GroupBy(x => new { x.ProviderId, x.SessionId })
             .Select(g => new
             {
                 Latest = g.Max(x => x.Timestamp),
@@ -198,7 +198,7 @@ internal sealed class DashboardView : Grid
     {
         var p = new StackPanel { Spacing = 10, HorizontalAlignment = HorizontalAlignment.Stretch };
         p.Children.Add(Heading("Sessions", "Recent sessions, without conversation contents."));
-        var sessions = _records.Where(x => !string.IsNullOrWhiteSpace(x.SessionId)).GroupBy(x => x.SessionId!)
+        var sessions = _records.Where(x => !string.IsNullOrWhiteSpace(x.SessionId)).GroupBy(x => new { x.ProviderId, x.SessionId })
             .Select(g => new { Latest = g.Max(x => x.Timestamp), Project = g.Select(x => x.ProjectName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? "Local project", Model = g.OrderByDescending(x => x.Timestamp).First().ModelId, Tokens = g.Sum(x => x.InputTokens + x.OutputTokens + x.CacheReadTokens + x.CacheWriteTokens) })
             .OrderByDescending(x => x.Latest).Take(50).ToArray();
         foreach (var session in sessions) p.Children.Add(Session(session.Project, $"{session.Model} · {session.Latest.ToLocalTime():MMM d, h:mm tt}", FormatTokens(session.Tokens)));
