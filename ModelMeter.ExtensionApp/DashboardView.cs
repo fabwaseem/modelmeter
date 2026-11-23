@@ -23,7 +23,6 @@ internal sealed class DashboardView : Grid
         _settings = settings;
         _records = records;
         _snapshots = snapshots;
-        Background = B("#FF101113");
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
@@ -31,12 +30,12 @@ internal sealed class DashboardView : Grid
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var brand = new StackPanel { Spacing = 3 };
-        brand.Children.Add(new TextBlock { Text = "MODELMETER", FontSize = 12, CharacterSpacing = 150, FontWeight = FontWeights.Bold, Foreground = B("#FFF3F4F6") });
-        brand.Children.Add(new TextBlock { Text = "YOUR AI USAGE. ONE DASHBOARD.", FontSize = 9, CharacterSpacing = 90, Foreground = B("#FF969BA5") });
+        brand.Children.Add(new TextBlock { Text = "MODELMETER", CharacterSpacing = 150, FontWeight = FontWeights.Bold, Foreground = Res("TextFillColorPrimaryBrush") });
+        brand.Children.Add(new TextBlock { Text = "YOUR AI USAGE. ONE DASHBOARD.", CharacterSpacing = 90, Foreground = Res("TextFillColorSecondaryBrush") });
         header.Children.Add(brand);
         var demo = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, VerticalAlignment = VerticalAlignment.Center };
-        demo.Children.Add(new Border { Width = 7, Height = 7, CornerRadius = new CornerRadius(4), Background = B("#FFA3E635") });
-        demo.Children.Add(new TextBlock { Text = "LOCAL USAGE", FontSize = 9, CharacterSpacing = 90, Foreground = B("#FFA3E635") });
+        demo.Children.Add(new Border { Width = 7, Height = 7, CornerRadius = new CornerRadius(4), Background = Res("AccentTextFillColorPrimaryBrush") });
+        demo.Children.Add(new TextBlock { Text = "LOCAL USAGE", CharacterSpacing = 90, Foreground = Res("AccentTextFillColorPrimaryBrush") });
         Grid.SetColumn(demo, 1); header.Children.Add(demo);
         Children.Add(header);
 
@@ -47,7 +46,7 @@ internal sealed class DashboardView : Grid
         var nav = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 0, 0, 16) };
         foreach (var name in new[] { "Overview", "Providers", "Analytics", "Models", "Sessions", "Quotas" })
         {
-            var button = new Button { Content = name, HorizontalContentAlignment = HorizontalAlignment.Center, Padding = new Thickness(14, 9, 14, 9), Background = name == _active ? B("#FF292E25") : B("#00101113"), Foreground = name == _active ? B("#FFA3E635") : B("#FF969BA5"), BorderThickness = new Thickness(0), CornerRadius = new CornerRadius(8), FontSize = 12 };
+            var button = new Button { Content = name, HorizontalContentAlignment = HorizontalAlignment.Center, Padding = new Thickness(14, 8, 14, 8), Background = name == _active ? Res("SubtleFillColorSecondaryBrush") : Res("ControlFillColorTransparentBrush"), Foreground = name == _active ? Res("AccentTextFillColorPrimaryBrush") : Res("TextFillColorSecondaryBrush"), BorderThickness = new Thickness(0) };
             button.Click += (_, _) => Navigate(name);
             _tabs[name] = button; nav.Children.Add(button);
         }
@@ -65,8 +64,8 @@ internal sealed class DashboardView : Grid
         _active = name;
         foreach (var pair in _tabs)
         {
-            pair.Value.Background = pair.Key == name ? B("#FF292E25") : B("#00101113");
-            pair.Value.Foreground = pair.Key == name ? B("#FFA3E635") : B("#FF969BA5");
+            pair.Value.Background = pair.Key == name ? Res("SubtleFillColorSecondaryBrush") : Res("ControlFillColorTransparentBrush");
+            pair.Value.Foreground = pair.Key == name ? Res("AccentTextFillColorPrimaryBrush") : Res("TextFillColorSecondaryBrush");
         }
         _page.Content = name switch
         {
@@ -152,7 +151,7 @@ internal sealed class DashboardView : Grid
             foreach (var session in recent)
                 p.Children.Add(Session(session.Project, session.Model + " · " + session.Latest.ToLocalTime().ToString("MMM d, h:mm tt"), FormatTokens(session.Tokens)));
 
-        p.Children.Add(new TextBlock { Text = "LOCAL-FIRST BY DESIGN  ·  Prompts, responses and tool output are never displayed or retained.", FontSize = 9, CharacterSpacing = 25, Foreground = B("#FF777D87"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) });
+        p.Children.Add(new TextBlock { Text = "LOCAL-FIRST BY DESIGN  ·  Prompts, responses and tool output are never displayed or retained.", CharacterSpacing = 25, Foreground = Res("TextFillColorTertiaryBrush"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) });
         return Scroll(p);
     }
 
@@ -166,7 +165,7 @@ internal sealed class DashboardView : Grid
             p.Children.Add(ProviderCard(snapshot.DisplayName, $"{snapshot.State} · {snapshot.StatusMessage}", total > 0 ? FormatTokens(total) : "—", ColorForProvider(snapshot.ProviderId)));
         }
         if (_snapshots.Count == 0) p.Children.Add(EmptyState("No providers checked", "ModelMeter has not detected any supported local provider directories."));
-        p.Children.Add(new TextBlock { Text = "Gemini CLI: enable local telemetry in ~/.gemini/settings.json with telemetry.enabled=true, telemetry.target=local, and an absolute telemetry.outfile path. ModelMeter imports API-response token counts only. OpenCode reads assistant usage metadata from its local SQLite database.", FontSize = 10, Foreground = B("#FF969BA5"), TextWrapping = TextWrapping.Wrap });
+        p.Children.Add(new TextBlock { Text = "Gemini CLI: enable local telemetry in ~/.gemini/settings.json with telemetry.enabled=true, telemetry.target=local, and an absolute telemetry.outfile path. ModelMeter imports API-response token counts only. OpenCode reads assistant usage metadata from its local SQLite database.", Foreground = Res("TextFillColorSecondaryBrush"), TextWrapping = TextWrapping.Wrap });
         return Scroll(p);
     }
 
@@ -218,8 +217,8 @@ internal sealed class DashboardView : Grid
     private static UIElement Heading(string title, string subtitle)
     {
         var s = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 0, 4) };
-        s.Children.Add(new TextBlock { Text = title, FontSize = 23, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
-        s.Children.Add(new TextBlock { Text = subtitle, FontSize = 12, Foreground = B("#FF969BA5") });
+        s.Children.Add(new TextBlock { Text = title, FontSize = 23, FontWeight = FontWeights.SemiBold, Foreground = Res("TextFillColorPrimaryBrush") });
+        s.Children.Add(new TextBlock { Text = subtitle, Foreground = Res("TextFillColorSecondaryBrush") });
         return s;
     }
 
@@ -228,18 +227,18 @@ internal sealed class DashboardView : Grid
         var g = new Grid { Margin = new Thickness(0, 5, 0, 0) };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        g.Children.Add(new TextBlock { Text = title, FontSize = 9, CharacterSpacing = 110, FontWeight = FontWeights.SemiBold, Foreground = B("#FF969BA5") });
-        var t = new TextBlock { Text = trailing, FontSize = 9, Foreground = B("#FF777D87") }; Grid.SetColumn(t, 1); g.Children.Add(t);
+        g.Children.Add(new TextBlock { Text = title, CharacterSpacing = 110, FontWeight = FontWeights.SemiBold, Foreground = Res("TextFillColorSecondaryBrush") });
+        var t = new TextBlock { Text = trailing, Foreground = Res("TextFillColorTertiaryBrush") }; Grid.SetColumn(t, 1); g.Children.Add(t);
         return g;
     }
 
     private static Border Metric(string label, string value, string note, bool accent = false)
     {
         var s = new StackPanel { Spacing = 7 };
-        s.Children.Add(new TextBlock { Text = label, FontSize = 9, CharacterSpacing = 80, Foreground = B("#FF969BA5") });
-        s.Children.Add(new TextBlock { Text = value, FontSize = 25, FontWeight = FontWeights.SemiBold, Foreground = accent ? B("#FFA3E635") : B("#FFF3F4F6") });
-        s.Children.Add(new TextBlock { Text = note, FontSize = 10, Foreground = B("#FF969BA5"), TextWrapping = TextWrapping.Wrap });
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(13), Child = s };
+        s.Children.Add(new TextBlock { Text = label, CharacterSpacing = 80, Foreground = Res("TextFillColorSecondaryBrush") });
+        s.Children.Add(new TextBlock { Text = value, FontSize = 25, FontWeight = FontWeights.SemiBold, Foreground = accent ? Res("AccentTextFillColorPrimaryBrush") : Res("TextFillColorPrimaryBrush") });
+        s.Children.Add(new TextBlock { Text = note, Foreground = Res("TextFillColorSecondaryBrush"), TextWrapping = TextWrapping.Wrap });
+        return new Border { Background = Res("CardBackgroundFillColorDefaultBrush"), BorderBrush = Res("CardStrokeColorDefaultBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(12), Child = s };
     }
 
     private static UIElement Chart(IReadOnlyList<UsageRecord> records)
@@ -257,18 +256,18 @@ internal sealed class DashboardView : Grid
         for (var i = 0; i < daily.Length; i++)
         {
             var height = Math.Max(2, 110d * daily[i].Total / max);
-            var bar = new Border { Width = 22, Height = height, VerticalAlignment = VerticalAlignment.Bottom, HorizontalAlignment = HorizontalAlignment.Center, CornerRadius = new CornerRadius(5,5,2,2), Background = i == 6 ? B("#FFA3E635") : B("#FF48533A") };
+            var bar = new Border { Width = 22, Height = height, VerticalAlignment = VerticalAlignment.Bottom, HorizontalAlignment = HorizontalAlignment.Center, CornerRadius = new CornerRadius(5,5,2,2), Background = i == 6 ? Res("AccentTextFillColorPrimaryBrush") : B("#FF48533A") };
             Grid.SetColumn(bar, i); root.Children.Add(bar);
         }
         var labels = new Grid { Margin = new Thickness(0, 7, 0, 0) };
         foreach (var _ in Enumerable.Range(0, 7)) labels.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         for (var i = 0; i < daily.Length; i++)
         {
-            var t = new TextBlock { Text = daily[i].Date.ToString("ddd")[..1], FontSize = 9, Foreground = B("#FF777D87"), HorizontalAlignment = HorizontalAlignment.Center };
+            var t = new TextBlock { Text = daily[i].Date.ToString("ddd")[..1], Foreground = Res("TextFillColorTertiaryBrush"), HorizontalAlignment = HorizontalAlignment.Center };
             Grid.SetColumn(t, i); labels.Children.Add(t);
         }
         var s = new StackPanel(); s.Children.Add(root); s.Children.Add(labels);
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(12), Child = s };
+        return new Border { Background = Res("CardBackgroundFillColorDefaultBrush"), BorderBrush = Res("CardStrokeColorDefaultBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(12), Child = s };
     }
 
     private static UIElement Provider(string name, string value, double ratio, string color)
@@ -278,10 +277,10 @@ internal sealed class DashboardView : Grid
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var s = new StackPanel { Spacing = 5 };
         var labels = new Grid(); labels.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); labels.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        labels.Children.Add(new TextBlock { Text = name, FontSize = 11, Foreground = B("#FFE5E7EB") });
-        var amount = new TextBlock { Text = value, FontSize = 10, Foreground = B("#FF969BA5") }; Grid.SetColumn(amount, 1); labels.Children.Add(amount);
+        labels.Children.Add(new TextBlock { Text = name, Foreground = Res("TextFillColorPrimaryBrush") });
+        var amount = new TextBlock { Text = value, Foreground = Res("TextFillColorSecondaryBrush") }; Grid.SetColumn(amount, 1); labels.Children.Add(amount);
         s.Children.Add(labels);
-        var track = new Grid { Height = 4, Background = B("#FF30343A") };
+        var track = new Grid { Height = 4, Background = Res("CardStrokeColorDefaultBrush") };
         track.Children.Add(new Border { Width = 360 * ratio, HorizontalAlignment = HorizontalAlignment.Left, Background = B(color), CornerRadius = new CornerRadius(4) });
         s.Children.Add(track); g.Children.Add(s);
         return g;
@@ -292,11 +291,11 @@ internal sealed class DashboardView : Grid
         var g = new Grid { ColumnSpacing = 12 };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var s = new StackPanel { Spacing = 5 };
-        s.Children.Add(new TextBlock { Text = name, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
-        s.Children.Add(new TextBlock { Text = status, FontSize = 10, Foreground = B("#FF969BA5") });
+        s.Children.Add(new TextBlock { Text = name, FontWeight = FontWeights.SemiBold, Foreground = Res("TextFillColorPrimaryBrush") });
+        s.Children.Add(new TextBlock { Text = status, Foreground = Res("TextFillColorSecondaryBrush") });
         g.Children.Add(s);
-        var n = new TextBlock { Text = tokens, FontSize = 14, Foreground = B(color), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(n, 1); g.Children.Add(n);
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(13), Child = g };
+        var n = new TextBlock { Text = tokens, Foreground = B(color), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(n, 1); g.Children.Add(n);
+        return new Border { Background = Res("CardBackgroundFillColorDefaultBrush"), BorderBrush = Res("CardStrokeColorDefaultBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(12), Child = g };
     }
 
     private static UIElement Session(string project, string details, string tokens)
@@ -304,30 +303,30 @@ internal sealed class DashboardView : Grid
         var g = new Grid { ColumnSpacing = 10 };
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var s = new StackPanel { Spacing = 4 };
-        s.Children.Add(new TextBlock { Text = project, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
-        s.Children.Add(new TextBlock { Text = details, FontSize = 10, Foreground = B("#FF969BA5") });
+        s.Children.Add(new TextBlock { Text = project, FontWeight = FontWeights.SemiBold, Foreground = Res("TextFillColorPrimaryBrush") });
+        s.Children.Add(new TextBlock { Text = details, Foreground = Res("TextFillColorSecondaryBrush") });
         g.Children.Add(s);
-        var n = new TextBlock { Text = tokens, FontSize = 13, Foreground = B("#FFA3E635"), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(n, 1); g.Children.Add(n);
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(13), Child = g };
+        var n = new TextBlock { Text = tokens, Foreground = Res("AccentTextFillColorPrimaryBrush"), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(n, 1); g.Children.Add(n);
+        return new Border { Background = Res("CardBackgroundFillColorDefaultBrush"), BorderBrush = Res("CardStrokeColorDefaultBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(12), Child = g };
     }
 
     private static UIElement Quota(string provider, string window, double used, string note)
     {
         var s = new StackPanel { Spacing = 9 };
-        s.Children.Add(new TextBlock { Text = provider + " · " + window, FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
-        var track = new Grid { Height = 6, Background = B("#FF30343A") };
-        track.Children.Add(new Border { Width = 400 * used, HorizontalAlignment = HorizontalAlignment.Left, Background = B("#FFA3E635"), CornerRadius = new CornerRadius(4) });
+        s.Children.Add(new TextBlock { Text = provider + " · " + window, FontWeight = FontWeights.SemiBold, Foreground = Res("TextFillColorPrimaryBrush") });
+        var track = new Grid { Height = 6, Background = Res("CardStrokeColorDefaultBrush") };
+        track.Children.Add(new Border { Width = 400 * used, HorizontalAlignment = HorizontalAlignment.Left, Background = Res("AccentTextFillColorPrimaryBrush"), CornerRadius = new CornerRadius(4) });
         s.Children.Add(track);
-        s.Children.Add(new TextBlock { Text = note, FontSize = 10, Foreground = B("#FF969BA5") });
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(14), Child = s };
+        s.Children.Add(new TextBlock { Text = note, Foreground = Res("TextFillColorSecondaryBrush") });
+        return new Border { Background = Res("CardBackgroundFillColorDefaultBrush"), BorderBrush = Res("CardStrokeColorDefaultBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(12), Child = s };
     }
 
     private static UIElement EmptyState(string title, string description)
     {
         var panel = new StackPanel { Spacing = 6 };
-        panel.Children.Add(new TextBlock { Text = title, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = B("#FFF3F4F6") });
-        panel.Children.Add(new TextBlock { Text = description, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = B("#FF969BA5") });
-        return new Border { Background = B("#FF191B1F"), BorderBrush = B("#FF30343A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(14), Child = panel };
+        panel.Children.Add(new TextBlock { Text = title, FontWeight = FontWeights.SemiBold, Foreground = Res("TextFillColorPrimaryBrush") });
+        panel.Children.Add(new TextBlock { Text = description, TextWrapping = TextWrapping.Wrap, Foreground = Res("TextFillColorSecondaryBrush") });
+        return new Border { Background = Res("CardBackgroundFillColorDefaultBrush"), BorderBrush = Res("CardStrokeColorDefaultBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(12), Child = panel };
     }
 
     private static string ProviderName(string id) => id switch { "claude-code" => "Claude Code", "openai-codex" => "OpenAI Codex", "gemini-cli" => "Gemini CLI", "opencode" => "OpenCode", _ => id };
@@ -335,5 +334,7 @@ internal sealed class DashboardView : Grid
     private static string FormatTokens(long value) => value >= 1_000_000 ? (value / 1_000_000d).ToString("0.##") + "M" : value >= 1_000 ? (value / 1_000d).ToString("0.#") + "K" : value.ToString("N0");
 
     private static ScrollViewer Scroll(UIElement content) => new() { Content = content, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+    private static Brush Res(string key) => (Brush)Application.Current.Resources[key];
+
     private static SolidColorBrush B(string hex) => new(Color.FromArgb(Convert.ToByte(hex[1..3],16), Convert.ToByte(hex[3..5],16), Convert.ToByte(hex[5..7],16), Convert.ToByte(hex[7..9],16)));
 }
