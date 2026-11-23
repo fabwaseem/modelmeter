@@ -45,7 +45,7 @@ public sealed class UsageDatabaseTests
             var stored = Assert.Single(result);
             Assert.Equal(record.Id, stored.Id);
             Assert.Equal(record.ProviderId, stored.ProviderId);
-            Assert.Equal(record.ModelId, stored.ModelId);
+            Assert.Equal(corrected.ModelId, stored.ModelId);
             Assert.Equal(record.SessionId, stored.SessionId);
             Assert.Equal(record.ProjectName, stored.ProjectName);
             Assert.Equal(record.Timestamp, stored.Timestamp);
